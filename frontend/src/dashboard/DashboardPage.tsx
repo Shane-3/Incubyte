@@ -1,5 +1,5 @@
 import { Plus } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { SortField, Vehicle } from '../api/types';
 import { AppShell } from '../app/AppShell';
 import { useAuth } from '../auth/AuthProvider';
@@ -12,6 +12,7 @@ import { RowControls } from './RowControls';
 import { Toolbar } from './Toolbar';
 import { useForecast, useStats, useVehicles } from './queries';
 import { type Filters, toVehicleQuery, useFilters } from './useFilters';
+import { type Panel, VehiclePanels } from './VehiclePanels';
 import { VehicleTable } from './VehicleTable';
 
 function emptyMessage(hasFilters: boolean, stock: Filters['stock'], view: Filters['view']): string {
@@ -30,6 +31,7 @@ export function DashboardPage() {
   const vehicles = useVehicles(query);
   const stats = useStats();
   const forecast = useForecast(isAdmin);
+  const [panel, setPanel] = useState<Panel | null>(null);
 
   const forecastById = useMemo(
     () => (isAdmin ? new Map((forecast.data?.data ?? []).map((f) => [f.vehicleId, f])) : undefined),
@@ -49,11 +51,11 @@ export function DashboardPage() {
     update({ sort: field, order });
   }
 
-  const menuFor = (_v: Vehicle): MenuItem[] => {
-    const items: MenuItem[] = [{ label: 'Edit', onSelect: () => undefined }];
+  const menuFor = (vehicle: Vehicle): MenuItem[] => {
+    const items: MenuItem[] = [{ label: 'Edit', onSelect: () => setPanel({ kind: 'edit', vehicle }) }];
     if (isAdmin) {
-      items.push({ label: 'Restock', onSelect: () => undefined });
-      items.push({ label: 'Delete', onSelect: () => undefined, tone: 'danger' });
+      items.push({ label: 'Restock', onSelect: () => setPanel({ kind: 'restock', vehicle }) });
+      items.push({ label: 'Delete', onSelect: () => setPanel({ kind: 'delete', vehicle }), tone: 'danger' });
     }
     return items;
   };
@@ -68,7 +70,7 @@ export function DashboardPage() {
             <h1 className="text-xl font-semibold">Inventory</h1>
             <p className="text-sm text-muted">{vehicles.data ? pluralise(count, 'vehicle') : ' '}</p>
           </div>
-          <Button variant="primary">
+          <Button variant="primary" onClick={() => setPanel({ kind: 'add' })}>
             <Plus aria-hidden="true" className="size-4" strokeWidth={1.75} />
             Add vehicle
           </Button>
@@ -123,6 +125,12 @@ export function DashboardPage() {
           />
         )}
       </div>
+      <VehiclePanels
+        panel={panel}
+        onClose={() => setPanel(null)}
+        forecastById={forecastById}
+        windowDays={forecast.data?.windowDays}
+      />
     </AppShell>
   );
 }
