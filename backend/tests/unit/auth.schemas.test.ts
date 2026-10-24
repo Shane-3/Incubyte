@@ -65,8 +65,6 @@ describe('loginSchema', () => {
   });
 
   it('caps the password length so oversized inputs never reach bcrypt', () => {
-    expect(failedFields(loginSchema.safeParse({ email: valid.email, password: 'x'.repeat(73) }))).toEqual([
-      'password',
-    ]);
+    expect(failedFields(loginSchema.safeParse({ email: valid.email, password: 'x'.repeat(73) }))).toEqual(['password']);
   });
 });

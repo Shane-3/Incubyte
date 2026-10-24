@@ -48,8 +48,8 @@ describe('forecastVehicle', () => {
   });
 
   it('rounds the suggestion up to whole units', () => {
-    expect(forecastVehicle({ vehicleId: 'camry', quantity: 0, unitsSold: 10 }, { windowDays: 7, atRiskDays: 3 })).toMatchObject(
-      { avgDailySales: 1.43, suggestedRestock: 10 },
-    );
+    expect(
+      forecastVehicle({ vehicleId: 'camry', quantity: 0, unitsSold: 10 }, { windowDays: 7, atRiskDays: 3 }),
+    ).toMatchObject({ avgDailySales: 1.43, suggestedRestock: 10 });
   });
 });

@@ -29,7 +29,8 @@ describe('watch API', () => {
     return rows;
   }
 
-  const watch = (id: string, cookie = user.cookie, app = api) => app.mutate('post', `/api/vehicles/${id}/watch`, cookie);
+  const watch = (id: string, cookie = user.cookie, app = api) =>
+    app.mutate('post', `/api/vehicles/${id}/watch`, cookie);
 
   describe('POST /api/vehicles/:id/watch', () => {
     it('watches an out-of-stock vehicle', async () => {

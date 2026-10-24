@@ -57,7 +57,9 @@ describe('back-in-stock notifications', () => {
     await api.mutate('post', `/api/vehicles/${camry.id}/restock`, admin).send({ quantity: 4 });
 
     expect(await backInStockFor(camry.id)).toEqual(
-      watchers.map((w) => ({ recipient_id: w.id, quantity: 4 })).sort((a, b) => a.recipient_id.localeCompare(b.recipient_id)),
+      watchers
+        .map((w) => ({ recipient_id: w.id, quantity: 4 }))
+        .sort((a, b) => a.recipient_id.localeCompare(b.recipient_id)),
     );
     expect(await watchCount()).toBe(0);
   });

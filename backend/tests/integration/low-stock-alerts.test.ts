@@ -119,10 +119,10 @@ describe('low-stock alerts', () => {
   it('blocks duplicate open alerts at the database level', async () => {
     const camry = await api.vehicles.create(buildVehicle());
     const insert = () =>
-      pool.query(`INSERT INTO notifications (recipient_id, type, vehicle_id, quantity) VALUES ($1, 'LOW_STOCK', $2, 2)`, [
-        adminIds[0],
-        camry.id,
-      ]);
+      pool.query(
+        `INSERT INTO notifications (recipient_id, type, vehicle_id, quantity) VALUES ($1, 'LOW_STOCK', $2, 2)`,
+        [adminIds[0], camry.id],
+      );
     await insert();
 
     await expect(insert()).rejects.toThrow(/duplicate key/);

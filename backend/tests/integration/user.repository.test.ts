@@ -3,7 +3,12 @@ import { EmailTakenError } from '../../src/errors';
 import { PgUserRepository } from '../../src/repositories/pg-user.repository';
 import { openTestDb, resetDb } from '../helpers/db';
 
-const priya = { name: 'Priya Nair', email: 'priya.nair@example.com', passwordHash: '$2b$04$hash', role: 'user' as const };
+const priya = {
+  name: 'Priya Nair',
+  email: 'priya.nair@example.com',
+  passwordHash: '$2b$04$hash',
+  role: 'user' as const,
+};
 
 describe('PgUserRepository', () => {
   let pool: Pool;

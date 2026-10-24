@@ -29,7 +29,10 @@ const round = (value: number, decimals: number) => {
  * Pure stock-out forecast for one vehicle (design.md section 5A). The suggested restock covers one window of
  * sales; it is computed from the integer units sold, not the rounded average, so no float error creeps in.
  */
-export function forecastVehicle({ vehicleId, quantity, unitsSold }: SalesSummary, window: ForecastWindow): VehicleForecast {
+export function forecastVehicle(
+  { vehicleId, quantity, unitsSold }: SalesSummary,
+  window: ForecastWindow,
+): VehicleForecast {
   if (unitsSold === 0) {
     return { vehicleId, avgDailySales: 0, daysOfStockLeft: null, atRisk: false, suggestedRestock: 0 };
   }

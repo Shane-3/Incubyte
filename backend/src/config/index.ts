@@ -38,8 +38,7 @@ const duration = z
     return Number.parseInt(value, 10) * (DURATION_UNITS[unit] ?? 1);
   });
 
-const int = (fallback: number, min: number, max: number) =>
-  z.coerce.number().int().min(min).max(max).default(fallback);
+const int = (fallback: number, min: number, max: number) => z.coerce.number().int().min(min).max(max).default(fallback);
 
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),

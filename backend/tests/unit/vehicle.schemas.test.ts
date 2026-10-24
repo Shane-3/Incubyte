@@ -18,12 +18,19 @@ describe('createVehicleSchema', () => {
     expect(result.data).toEqual(camry);
   });
 
-  it.each(['Mercedes-Benz', 'Land Rover', 'Citroën', 'Model 3', 'F-150', 'C-HR', 'e-tron GT', '911 (992)', "Rolls-Royce"])(
-    'accepts the real-world name %s',
-    (make) => {
-      expect(createVehicleSchema.safeParse({ ...camry, make }).success).toBe(true);
-    },
-  );
+  it.each([
+    'Mercedes-Benz',
+    'Land Rover',
+    'Citroën',
+    'Model 3',
+    'F-150',
+    'C-HR',
+    'e-tron GT',
+    '911 (992)',
+    'Rolls-Royce',
+  ])('accepts the real-world name %s', (make) => {
+    expect(createVehicleSchema.safeParse({ ...camry, make }).success).toBe(true);
+  });
 
   it('normalises category case to the canonical name', () => {
     expect(createVehicleSchema.parse({ ...camry, category: 'suv' }).category).toBe('SUV');

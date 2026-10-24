@@ -39,7 +39,12 @@ function vehicle(quantity: number): Vehicle {
   };
 }
 
-async function run(before: number, after: number, change: StockChange = after < before ? purchase : restock, threshold = 3) {
+async function run(
+  before: number,
+  after: number,
+  change: StockChange = after < before ? purchase : restock,
+  threshold = 3,
+) {
   const writer = new RecordingAlertWriter();
   await new LowStockAlertHandler(writer, threshold).handle({ change, vehicle: vehicle(after), before, after }, TX);
   return writer;

@@ -35,7 +35,10 @@ describe('migrate', () => {
   }
 
   it('applies pending .sql files in filename order and records them', async () => {
-    await writeFile(path.join(dir, '002_b.sql'), 'CREATE TABLE migrate_probe_b (a_id int REFERENCES migrate_probe_a(id));');
+    await writeFile(
+      path.join(dir, '002_b.sql'),
+      'CREATE TABLE migrate_probe_b (a_id int REFERENCES migrate_probe_a(id));',
+    );
     await writeFile(path.join(dir, '001_a.sql'), 'CREATE TABLE migrate_probe_a (id int PRIMARY KEY);');
     await writeFile(path.join(dir, 'README.md'), 'not a migration');
 

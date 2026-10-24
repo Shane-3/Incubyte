@@ -104,9 +104,7 @@ describe('security headers', () => {
 
   it('only sends HSTS in production', async () => {
     const dev = await request(buildTestApp().app).get('/api/auth/me');
-    const prod = await request(
-      buildTestApp({ config: testConfig({ env: 'production' }) }).app,
-    ).get('/api/auth/me');
+    const prod = await request(buildTestApp({ config: testConfig({ env: 'production' }) }).app).get('/api/auth/me');
 
     expect(dev.headers['strict-transport-security']).toBeUndefined();
     expect(prod.headers['strict-transport-security']).toBe('max-age=31536000; includeSubDomains');

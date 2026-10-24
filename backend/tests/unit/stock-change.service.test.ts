@@ -146,9 +146,9 @@ describe('StockChangeService', () => {
     it('rejects an unknown vehicle with VehicleNotFoundError', async () => {
       const { service } = setup();
 
-      await expect(
-        service.apply('ghost', { kind: 'purchase', quantity: 1, userId: 'priya' }),
-      ).rejects.toBeInstanceOf(VehicleNotFoundError);
+      await expect(service.apply('ghost', { kind: 'purchase', quantity: 1, userId: 'priya' })).rejects.toBeInstanceOf(
+        VehicleNotFoundError,
+      );
     });
   });
 

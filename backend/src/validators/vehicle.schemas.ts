@@ -55,7 +55,12 @@ export const updateVehicleSchema = createVehicleSchema
 const optionalQuery = <T extends z.ZodType>(schema: T) =>
   z.preprocess((value) => (value === '' ? undefined : value), schema.optional());
 
-const searchText = z.string().trim().min(1).max(100).regex(SEARCH_TEXT_PATTERN, 'contains characters that are not allowed');
+const searchText = z
+  .string()
+  .trim()
+  .min(1)
+  .max(100)
+  .regex(SEARCH_TEXT_PATTERN, 'contains characters that are not allowed');
 const queryPrice = z.coerce.number().min(0, 'must be 0 or more').max(MAX_PRICE);
 
 export const searchQuerySchema = z

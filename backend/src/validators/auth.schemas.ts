@@ -28,13 +28,15 @@ const COMMON_PASSWORDS = new Set([
 
 const NAME_PATTERN = /^[\p{L}\p{M} .'-]+$/u;
 
-const email = z.string().trim().max(255).pipe(z.email({ message: 'must be a valid email address' }));
-
-const passwordWithinBcryptLimit = z
+const email = z
   .string()
-  .refine((value) => Buffer.byteLength(value) <= MAX_PASSWORD_BYTES, {
-    message: `must be at most ${MAX_PASSWORD_BYTES} bytes`,
-  });
+  .trim()
+  .max(255)
+  .pipe(z.email({ message: 'must be a valid email address' }));
+
+const passwordWithinBcryptLimit = z.string().refine((value) => Buffer.byteLength(value) <= MAX_PASSWORD_BYTES, {
+  message: `must be at most ${MAX_PASSWORD_BYTES} bytes`,
+});
 
 export const registerSchema = z.strictObject({
   name: z

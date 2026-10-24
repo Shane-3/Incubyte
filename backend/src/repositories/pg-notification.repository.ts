@@ -22,8 +22,7 @@ interface InboxRow {
   created_at: Date;
 }
 
-const INBOX_COLUMNS =
-  'n.id, n.type, n.vehicle_id, v.make, v.model, n.quantity, n.read_at, n.resolved_at, n.created_at';
+const INBOX_COLUMNS = 'n.id, n.type, n.vehicle_id, v.make, v.model, n.quantity, n.read_at, n.resolved_at, n.created_at';
 
 function toView(row: InboxRow): NotificationView {
   return {

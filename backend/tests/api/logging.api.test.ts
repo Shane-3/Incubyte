@@ -86,7 +86,11 @@ describe('request logging', () => {
     const { mutate, logger, sessionCookieFor, app } = setup();
     const { cookie } = sessionCookieFor();
 
-    await mutate('post', '/api/auth/register').send({ name: 'Priya Nair', email: 'priya@example.com', password: 'S3curePass!' });
+    await mutate('post', '/api/auth/register').send({
+      name: 'Priya Nair',
+      email: 'priya@example.com',
+      password: 'S3curePass!',
+    });
     await mutate('post', '/api/auth/login').send({ email: 'priya@example.com', password: 'S3curePass!' });
     await request(app).get('/api/auth/me').set('Cookie', cookie).set('Authorization', 'Bearer secret-bearer');
 

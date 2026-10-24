@@ -1,7 +1,15 @@
 import { VehicleNotFoundError } from '../errors';
 import type { IVehicleRepository } from '../repositories/vehicle.repository';
 import type { StockChangeService } from './stock-change.service';
-import type { ListOptions, NewVehicle, Page, Vehicle, VehicleChanges, VehicleFilters, VehicleView } from '../types/vehicle';
+import type {
+  ListOptions,
+  NewVehicle,
+  Page,
+  Vehicle,
+  VehicleChanges,
+  VehicleFilters,
+  VehicleView,
+} from '../types/vehicle';
 
 export class VehicleService {
   constructor(

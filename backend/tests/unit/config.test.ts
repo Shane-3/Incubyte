@@ -63,9 +63,7 @@ describe('loadConfig', () => {
     });
 
     it('refuses the placeholder secret from .env.example, even when padded to length', () => {
-      expect(() => loadConfig({ ...prod, JWT_SECRET: 'change-me-change-me-change-me-change-me' })).toThrow(
-        ConfigError,
-      );
+      expect(() => loadConfig({ ...prod, JWT_SECRET: 'change-me-change-me-change-me-change-me' })).toThrow(ConfigError);
     });
   });
 });

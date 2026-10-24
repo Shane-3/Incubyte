@@ -56,9 +56,9 @@ describe('AuthService.register', () => {
     const { service } = setup();
     await service.register(priya);
 
-    await expect(
-      service.register({ ...priya, email: 'PRIYA.NAIR@example.com' }),
-    ).rejects.toBeInstanceOf(EmailTakenError);
+    await expect(service.register({ ...priya, email: 'PRIYA.NAIR@example.com' })).rejects.toBeInstanceOf(
+      EmailTakenError,
+    );
   });
 });
 
@@ -95,9 +95,9 @@ describe('AuthService.login', () => {
     const { service } = setup();
     await service.register(priya);
 
-    await expect(
-      service.login({ email: priya.email, password: 'wrong-password' }),
-    ).rejects.toBeInstanceOf(InvalidCredentialsError);
+    await expect(service.login({ email: priya.email, password: 'wrong-password' })).rejects.toBeInstanceOf(
+      InvalidCredentialsError,
+    );
   });
 
   it('rejects an unknown email with the same error as a wrong password', async () => {

@@ -62,7 +62,11 @@ describe('PgVehicleRepository', () => {
     });
 
     it('matches make and model case-insensitively and partially', async () => {
-      expect(await names({ make: 'toy' }, { sort: 'model' })).toEqual(['Toyota Camry', 'Toyota Corolla', 'Toyota RAV4']);
+      expect(await names({ make: 'toy' }, { sort: 'model' })).toEqual([
+        'Toyota Camry',
+        'Toyota Corolla',
+        'Toyota RAV4',
+      ]);
       expect(await names({ model: 'CIV' })).toEqual(['Honda Civic']);
     });
 
@@ -150,8 +154,14 @@ describe('PgVehicleRepository', () => {
 
   describe('database invariants', () => {
     it.each([
-      ['negative stock', `INSERT INTO vehicles (make, model, category, price, quantity) VALUES ('A', 'B', 'Sedan', 1, -1)`],
-      ['negative price', `INSERT INTO vehicles (make, model, category, price, quantity) VALUES ('A', 'B', 'Sedan', -1, 1)`],
+      [
+        'negative stock',
+        `INSERT INTO vehicles (make, model, category, price, quantity) VALUES ('A', 'B', 'Sedan', 1, -1)`,
+      ],
+      [
+        'negative price',
+        `INSERT INTO vehicles (make, model, category, price, quantity) VALUES ('A', 'B', 'Sedan', -1, 1)`,
+      ],
     ])('rejects %s', async (_, sql) => {
       await expect(pool.query(sql)).rejects.toThrow(/check constraint/);
     });
@@ -159,9 +169,9 @@ describe('PgVehicleRepository', () => {
     it('refuses to decrement stock below zero', async () => {
       const created = await repo.create(buildVehicle({ quantity: 1 }));
 
-      await expect(pool.query('UPDATE vehicles SET quantity = quantity - 2 WHERE id = $1', [created.id])).rejects.toThrow(
-        /check constraint/,
-      );
+      await expect(
+        pool.query('UPDATE vehicles SET quantity = quantity - 2 WHERE id = $1', [created.id]),
+      ).rejects.toThrow(/check constraint/);
     });
   });
 });
