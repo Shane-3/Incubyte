@@ -1,4 +1,4 @@
-import { Bell, BellRing, Minus, Plus } from 'lucide-react';
+import { Bell, BellRing, Minus, PackagePlus, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Vehicle } from '../api/types';
 import { Button } from '../components/ui/Button';
@@ -135,11 +135,27 @@ function WatchControl({ vehicle }: { vehicle: Vehicle }) {
   );
 }
 
-/** Purchase for everyone; on sold-out rows a Notify me / Watching toggle sits beside the disabled button. */
-export function RowControls({ vehicle }: { vehicle: Vehicle }) {
+interface RowControlsProps {
+  vehicle: Vehicle;
+  /** Present for admins: they restock sold-out vehicles themselves and already get the sold-out alert. */
+  onRestock?: () => void;
+}
+
+/**
+ * Purchase for everyone (disabled at zero). Beside it on sold-out rows: Restock for admins, or a Notify me /
+ * Watching toggle for everyone else.
+ */
+export function RowControls({ vehicle, onRestock }: RowControlsProps) {
+  const soldOut = vehicle.quantity === 0;
   return (
     <>
-      {vehicle.quantity === 0 && <WatchControl vehicle={vehicle} />}
+      {soldOut && onRestock && (
+        <Button size="sm" onClick={onRestock}>
+          <PackagePlus aria-hidden="true" className="size-3.5" strokeWidth={1.75} />
+          Restock
+        </Button>
+      )}
+      {soldOut && !onRestock && <WatchControl vehicle={vehicle} />}
       <PurchaseControl vehicle={vehicle} />
     </>
   );

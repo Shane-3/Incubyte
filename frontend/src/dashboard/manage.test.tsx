@@ -156,9 +156,9 @@ describe('sold-out rows', () => {
   it('show no row-level Restock button for admins while there is stock', async () => {
     renderApp({ api: apiFor(dana, [camry]) });
 
-    const row = (await within(await screen.findByRole('table', { name: 'Vehicles' })).findByText('Toyota Camry')).closest(
-      'tr',
-    )!;
+    const row = (
+      await within(await screen.findByRole('table', { name: 'Vehicles' })).findByText('Toyota Camry')
+    ).closest('tr')!;
     expect(within(row).queryByRole('button', { name: 'Restock' })).toBeNull();
     expect(within(row).getByRole('button', { name: 'Purchase' })).toBeEnabled();
   });

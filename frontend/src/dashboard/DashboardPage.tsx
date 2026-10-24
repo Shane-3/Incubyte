@@ -102,7 +102,9 @@ export function DashboardPage() {
     return items;
   };
 
-  const primaryFor = (v: Vehicle) => <RowControls vehicle={v} />;
+  const primaryFor = (vehicle: Vehicle) => (
+    <RowControls vehicle={vehicle} onRestock={isAdmin ? () => setPanel({ kind: 'restock', vehicle }) : undefined} />
+  );
 
   return (
     <AppShell>
