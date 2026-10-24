@@ -2,6 +2,7 @@ import cookieParser from 'cookie-parser';
 import express, { type Express } from 'express';
 import type { Config } from './config';
 import { createAuthController } from './controllers/auth.controller';
+import { LowStockAlertHandler } from './handlers/low-stock-alert.handler';
 import { createVehicleController } from './controllers/vehicle.controller';
 import { authenticate } from './middleware/authenticate';
 import { requireJsonBody, requireTrustedOrigin } from './middleware/csrf';
@@ -54,7 +55,11 @@ export function createApp(deps: AppDeps): Express {
   const authService = new AuthService(deps.users, deps.hasher, deps.tokens);
   app.use('/api/auth', authRoutes(createAuthController(authService, config), requireSession));
 
-  const stockChanges = new StockChangeService(deps.transactions, deps.stock, deps.stockHandlers ?? []);
+  const stockChanges = new StockChangeService(
+    deps.transactions,
+    deps.stock,
+    deps.stockHandlers ?? [new LowStockAlertHandler(deps.notifications, config.lowStockThreshold)],
+  );
   const vehicleService = new VehicleService(deps.vehicles, stockChanges);
   app.use(
     '/api/vehicles',
