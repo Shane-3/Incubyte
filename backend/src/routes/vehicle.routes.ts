@@ -3,6 +3,8 @@ import type { createVehicleController } from '../controllers/vehicle.controller'
 import { validateBody, validateParams, validateQuery } from '../middleware/validate';
 import {
   createVehicleSchema,
+  purchaseSchema,
+  restockSchema,
   searchQuerySchema,
   updateVehicleSchema,
   vehicleIdSchema,
@@ -23,6 +25,14 @@ export function vehicleRoutes(controller: ReturnType<typeof createVehicleControl
   router.get('/search', validateQuery(searchQuerySchema), controller.search);
   router.post('/', validateBody(createVehicleSchema), controller.create);
   router.put('/:id', validateParams(vehicleIdSchema), validateBody(updateVehicleSchema), controller.update);
+  router.post('/:id/purchase', validateParams(vehicleIdSchema), validateBody(purchaseSchema), controller.purchase);
+  router.post(
+    '/:id/restock',
+    guards.adminOnly,
+    validateParams(vehicleIdSchema),
+    validateBody(restockSchema),
+    controller.restock,
+  );
   router.delete('/:id', guards.adminOnly, validateParams(vehicleIdSchema), controller.remove);
   return router;
 }

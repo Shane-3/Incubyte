@@ -18,6 +18,7 @@ import { AuthService } from './services/auth.service';
 import type { IPasswordHasher } from './services/password-hasher';
 import type { ITokenService } from './services/token.service';
 import type { IStockChangeHandler } from './types/stock';
+import { StockChangeService } from './services/stock-change.service';
 import { VehicleService } from './services/vehicle.service';
 
 export interface AppDeps {
@@ -49,7 +50,8 @@ export function createApp(deps: AppDeps): Express {
   const authService = new AuthService(deps.users, deps.hasher, deps.tokens);
   app.use('/api/auth', authRoutes(createAuthController(authService, config), requireSession));
 
-  const vehicleService = new VehicleService(deps.vehicles);
+  const stockChanges = new StockChangeService(deps.transactions, deps.stock, deps.stockHandlers ?? []);
+  const vehicleService = new VehicleService(deps.vehicles, stockChanges);
   app.use(
     '/api/vehicles',
     vehicleRoutes(createVehicleController(vehicleService), {

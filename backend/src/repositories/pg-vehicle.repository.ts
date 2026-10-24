@@ -12,7 +12,7 @@ import type {
 } from '../types/vehicle';
 import type { IVehicleRepository } from './vehicle.repository';
 
-interface VehicleRow {
+export interface VehicleRow {
   id: string;
   make: string;
   model: string;
@@ -23,7 +23,8 @@ interface VehicleRow {
   updated_at: Date;
 }
 
-const COLUMNS = 'id, make, model, category, price, quantity, created_at, updated_at';
+export const VEHICLE_COLUMNS = 'id, make, model, category, price, quantity, created_at, updated_at';
+const COLUMNS = VEHICLE_COLUMNS;
 
 // Identifiers can't be bound as parameters, so sort columns come only from this fixed map.
 const SORT_COLUMNS: Record<SortField, string> = {

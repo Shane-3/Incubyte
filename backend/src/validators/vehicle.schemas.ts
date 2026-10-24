@@ -4,6 +4,7 @@ import { CATEGORIES, type Category, SORT_FIELDS } from '../types/vehicle';
 export const MAX_PRICE = 99_999_999.99;
 export const MAX_QUANTITY = 100_000;
 export const MAX_PAGE_SIZE = 100;
+export const MAX_PURCHASE_QUANTITY = 10;
 
 // Letters, digits and the punctuation real make/model names use. Rejects <, >, quotes and control characters.
 const NAME_PATTERN = /^[\p{L}\p{M}\p{N} .,'&()/+-]+$/u;
@@ -74,8 +75,21 @@ export const searchQuerySchema = z
     path: ['minPrice'],
   });
 
+export const purchaseSchema = z.strictObject({
+  quantity: quantity
+    .min(1, 'must be at least 1')
+    .max(MAX_PURCHASE_QUANTITY, `must be at most ${MAX_PURCHASE_QUANTITY}`)
+    .default(1),
+});
+
+export const restockSchema = z.strictObject({
+  quantity: quantity.min(1, 'must be at least 1'),
+});
+
 export const vehicleIdSchema = z.strictObject({ id: z.uuid('must be a valid id') });
 
 export type CreateVehicleBody = z.infer<typeof createVehicleSchema>;
 export type UpdateVehicleBody = z.infer<typeof updateVehicleSchema>;
 export type SearchQuery = z.infer<typeof searchQuerySchema>;
+export type PurchaseBody = z.infer<typeof purchaseSchema>;
+export type RestockBody = z.infer<typeof restockSchema>;
