@@ -8,6 +8,7 @@ import type { MenuItem } from '../components/ui/Menu';
 import { pluralise } from '../lib/format';
 import { KpiStrip } from './KpiStrip';
 import { Pagination } from './Pagination';
+import { RowControls } from './RowControls';
 import { Toolbar } from './Toolbar';
 import { useForecast, useStats, useVehicles } from './queries';
 import { type Filters, toVehicleQuery, useFilters } from './useFilters';
@@ -57,11 +58,7 @@ export function DashboardPage() {
     return items;
   };
 
-  const primaryFor = (v: Vehicle) => (
-    <Button size="sm" disabled={v.quantity === 0} title={v.quantity === 0 ? 'Out of stock' : undefined}>
-      Purchase
-    </Button>
-  );
+  const primaryFor = (v: Vehicle) => <RowControls vehicle={v} />;
 
   return (
     <AppShell>

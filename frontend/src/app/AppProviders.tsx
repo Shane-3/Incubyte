@@ -1,6 +1,7 @@
 import { type QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import type { Api } from '../api/endpoints';
+import { ToastProvider } from '../components/ui/Toast';
 import { ApiProvider } from './ApiContext';
 
 export function AppProviders({
@@ -14,7 +15,9 @@ export function AppProviders({
 }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <ApiProvider api={api}>{children}</ApiProvider>
+      <ApiProvider api={api}>
+        <ToastProvider>{children}</ToastProvider>
+      </ApiProvider>
     </QueryClientProvider>
   );
 }
