@@ -21,6 +21,8 @@ export async function migrate(pool: Pool, options: MigrateOptions = {}): Promise
     throw new Error(`Invalid migrations table name "${table}"`);
   }
 
+  // dir comes from code (the migrations folder or a test's temp dir), never from a request.
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
   const files = (await readdir(dir)).filter((f) => f.endsWith('.sql')).sort();
   const client = await pool.connect();
   try {
@@ -33,6 +35,7 @@ export async function migrate(pool: Pool, options: MigrateOptions = {}): Promise
 
     const applied: string[] = [];
     for (const file of files.filter((f) => !done.has(f))) {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- file names come from readdir(dir) above
       const sql = await readFile(path.join(dir, file), 'utf8');
       try {
         await client.query('BEGIN');
