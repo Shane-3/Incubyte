@@ -203,6 +203,14 @@ export function VehicleForm(props: AddProps | EditProps) {
             error={errors.quantity}
           />
         )}
+        {quantityFromColours && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium">Total units</span>
+            <p className="flex h-9 items-center text-base tabular-nums">
+              {totalUnits(rows)} <span className="ml-1.5 text-sm text-muted">from the colours below</span>
+            </p>
+          </div>
+        )}
       </div>
       {stockPerColour && (
         <p className="text-sm text-muted">

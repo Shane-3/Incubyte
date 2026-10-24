@@ -42,11 +42,7 @@ export function VehiclePanels({ panel, onClose, forecastById, windowDays }: Vehi
 
   if (panel.kind === 'add') {
     return (
-      <Drawer
-        title="Add vehicle"
-        description="A make and model already listed gets this colour added to it."
-        onClose={onClose}
-      >
+      <Drawer title="Add vehicle" description="Already listed? The colours are added to that model." onClose={onClose}>
         <VehicleForm
           mode="add"
           onCancel={onClose}

@@ -23,7 +23,7 @@ A full-stack inventory system for a car dealership, built test-first as a TDD ka
 | Everyone | Register, sign in (session in an httpOnly cookie), browse a sortable, paginated table, filter by make, model, category, price range and stock status (filters live in the URL) |
 | Everyone | Buy a vehicle in a chosen colour from a popover with quantity and total; **Purchase** is disabled when stock is 0 |
 | Everyone | **Colour variants**: every model (one auto-generated SKU, e.g. `TOY-CAMRY`) has paint colours with their own stock; open a vehicle to see it drawn in each colour |
-| Everyone | Add and edit vehicles from a side drawer; adding a make + model that already exists adds the colour (or more units of it) to that model |
+| Everyone | Add and edit vehicles from a side drawer, with several colours (each with its own units) in one go; adding a make + model that already exists adds the colours (or more units of them) to that model |
 | Everyone | **Notify me** on a sold-out vehicle; one in-app notice when it is back in stock |
 | Admins | Restock a colour (pre-filled with the forecast's suggestion; sold-out rows offer Restock directly) and delete (with a confirmation that names the vehicle) |
 | Admins | **Low-stock alerts** when a sale leaves 3 or fewer, and **sold-out alerts** at 0, de-duplicated and resolved automatically on restock |
@@ -93,8 +93,8 @@ Results on 2026-10-25:
 
 | Package | Test files | Tests | Statements | Branches | Functions | Lines |
 |---|---|---|---|---|---|---|
-| Backend | 32 | 445 passed | 98.0% | 90.2% | 99.6% | 99.3% |
-| Frontend | 10 | 104 passed | 90.9% | 86.8% | 88.8% | 93.1% |
+| Backend | 32 | 459 passed | 98.0% | 90.2% | 99.6% | 99.3% |
+| Frontend | 10 | 112 passed | 90.9% | 86.8% | 88.8% | 93.1% |
 
 What the backend suite covers:
 
@@ -121,7 +121,7 @@ All endpoints are JSON under `/api`. Errors share one shape: `{ "error": { "code
 | GET | `/auth/me` | signed in | restores the session in the SPA |
 | GET | `/vehicles`, `/vehicles/search` | signed in | `make`, `model`, `colour`, `category`, `minPrice`, `maxPrice`, `stock`, `sort`, `order`, `limit`, `offset`; each vehicle has `sku` and `colours` |
 | GET | `/vehicles/stats` | signed in | totals for the KPI strip |
-| POST | `/vehicles` | signed in | optional `colour { name, hex }`; an existing make + model merges (200, `merged: true`), 409 `MODEL_EXISTS` if price or category differ |
+| POST | `/vehicles` | signed in | optional `colour { name, hex }`, or `colours [{ name, hex, quantity }]` (up to 12, units totalling `quantity`); an existing make + model merges all of them in one change (200, `merged: true`), 409 `MODEL_EXISTS` if price or category differ |
 | PUT | `/vehicles/:id` | signed in | quantity changes go through the stock pipeline |
 | DELETE | `/vehicles/:id` | admin | |
 | POST | `/vehicles/:id/purchase` | signed in | optional `{ quantity, colourId }` (quantity 1 to 10; without a colour, the best-stocked one); 409 when short |
