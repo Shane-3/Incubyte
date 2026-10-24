@@ -14,7 +14,7 @@ export function Swatch({ hex, size = 12, soldOut = false }: { hex: string; size?
       width={size}
       height={size}
       aria-hidden="true"
-      className="shrink-0 text-border-strong"
+      className="shrink-0 text-paint-outline"
     >
       <circle cx={r} cy={r} r={r - 0.75} fill={hex} stroke="currentColor" strokeWidth="1.5" />
       {soldOut && <line x1="2" y1={size - 2} x2={size - 2} y2="2" stroke="currentColor" strokeWidth="1.5" />}

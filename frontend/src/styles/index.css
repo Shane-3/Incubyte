@@ -16,6 +16,8 @@
   --low: #a86400;
   --out: #b3261e;
   --overlay: rgb(14 15 17 / 0.32);
+  /* Outline around painted cars and swatches: visible against white paint on light surfaces. */
+  --paint-outline: #b4b5b0;
   color-scheme: light;
 }
 
@@ -35,6 +37,7 @@
   --low: #e0a03a;
   --out: #f0736b;
   --overlay: rgb(0 0 0 / 0.55);
+  --paint-outline: #6f747c;
   color-scheme: dark;
 }
 
@@ -54,6 +57,8 @@
     --low: #e0a03a;
     --out: #f0736b;
     --overlay: rgb(0 0 0 / 0.55);
+    /* Lighter in dark mode so black paint does not disappear into the surface. */
+    --paint-outline: #6f747c;
     color-scheme: dark;
   }
 }
@@ -75,6 +80,7 @@
   --color-low: var(--low);
   --color-out: var(--out);
   --color-overlay: var(--overlay);
+  --color-paint-outline: var(--paint-outline);
   --color-transparent: transparent;
   --color-current: currentColor;
 

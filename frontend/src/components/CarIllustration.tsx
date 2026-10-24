@@ -122,7 +122,7 @@ export function CarIllustration({ category, hex, label, className = '' }: CarIll
   return (
     <svg
       viewBox="0 0 240 96"
-      className={`text-border-strong ${className}`}
+      className={`text-paint-outline ${className}`}
       {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}
     >
       <defs>
@@ -152,7 +152,8 @@ export function CarIllustration({ category, hex, label, className = '' }: CarIll
       ))}
       <path d={shape.headlight} fill="#f4f1de" />
       <path d={shape.taillight} fill="#b3261e" />
-      <path d={shape.body} fill="none" stroke="currentColor" strokeWidth="1" />
+      {/* A real 1px outline at any size, so dark paint stays visible on dark surfaces (and white on white). */}
+      <path d={shape.body} fill="none" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
 
       {shape.wheels.map((cx) => (
         <g key={cx}>
