@@ -12,6 +12,8 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
+    "db:create": "tsx scripts/db-create.ts",
+    "migrate": "tsx scripts/migrate.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
