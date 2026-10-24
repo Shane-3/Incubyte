@@ -14,6 +14,8 @@ export interface Config {
   forecastAtRiskDays: number;
   maxWatchesPerUser: number;
   corsOrigin: string;
+  /** Express "trust proxy" setting: false, or the number of proxy hops in front of the app. */
+  trustProxy: boolean | number;
 }
 
 export class ConfigError extends Error {
@@ -51,6 +53,11 @@ const schema = z.object({
   FORECAST_AT_RISK_DAYS: int(7, 1, 365),
   MAX_WATCHES_PER_USER: int(50, 1, 1000),
   CORS_ORIGIN: z.url().default('http://localhost:5173'),
+  TRUST_PROXY: z
+    .string()
+    .regex(/^(false|true|\d+)$/, 'must be false, true or a hop count')
+    .default('false')
+    .transform((v) => (v === 'true' ? true : v === 'false' ? false : Number(v))),
 });
 
 export function loadConfig(env: Env): Config {
@@ -77,6 +84,7 @@ export function loadConfig(env: Env): Config {
     forecastAtRiskDays: e.FORECAST_AT_RISK_DAYS,
     maxWatchesPerUser: e.MAX_WATCHES_PER_USER,
     corsOrigin: e.CORS_ORIGIN,
+    trustProxy: e.TRUST_PROXY,
   };
 }
 

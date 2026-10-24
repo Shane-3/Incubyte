@@ -10,6 +10,7 @@ import { LowStockAlertHandler } from './handlers/low-stock-alert.handler';
 import { authenticate } from './middleware/authenticate';
 import { requireJsonBody, requireTrustedOrigin } from './middleware/csrf';
 import { errorHandler, notFound } from './middleware/error-handler';
+import type { RateLimits } from './middleware/rate-limit';
 import { requireRole } from './middleware/require-role';
 import { securityHeaders } from './middleware/security-headers';
 import type { INotificationRepository } from './repositories/notification.repository';
@@ -40,6 +41,7 @@ export type AppConfig = Pick<
   | 'forecastWindowDays'
   | 'forecastAtRiskDays'
   | 'maxWatchesPerUser'
+  | 'trustProxy'
 >;
 
 export interface AppDeps {
@@ -55,6 +57,8 @@ export interface AppDeps {
   config: AppConfig;
   /** Rules run inside every stock change. Defaults to low-stock alerts and back-in-stock notices. */
   stockHandlers?: IStockChangeHandler[];
+  /** Defaults to the limits in security.md; tests that are not about rate limiting raise them. */
+  rateLimits?: RateLimits;
   /** Injected so forecast tests control "now". */
   clock?: () => Date;
   /** Receives unexpected errors. Defaults to console.error outside tests. */

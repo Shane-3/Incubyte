@@ -14,6 +14,7 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     forecastWindowDays: 30,
     forecastAtRiskDays: 7,
     maxWatchesPerUser: 50,
+    trustProxy: false,
     ...overrides,
   };
 }
