@@ -1,11 +1,19 @@
 import type { Queryable } from '../db/transaction';
 import type { ColourStock, Vehicle, VehicleChanges } from './vehicle';
 
+export interface ColourUnits {
+  colourId: string;
+  quantity: number;
+}
+
 export type StockChange =
   /** Without a colour, the sale comes from the best-stocked colour. */
   | { kind: 'purchase'; quantity: number; userId: string; colourId?: string }
-  /** The colour may be omitted only for a single-colour model. */
-  | { kind: 'restock'; quantity: number; colourId?: string }
+  /**
+   * One colour (which may be omitted only for a single-colour model) or several `colours` with their own units,
+   * applied together as one change.
+   */
+  | { kind: 'restock'; quantity: number; colourId?: string; colours?: ColourUnits[] }
   /** An edit (PUT) that sets the quantity of a single-colour model, applied with the other edited fields. */
   | { kind: 'set'; quantity: number; fields: VehicleChanges }
   /** Adding stock of one or more colours to an existing model: new colours are created. One change, one event. */

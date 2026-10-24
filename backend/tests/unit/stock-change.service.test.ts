@@ -251,6 +251,44 @@ describe('StockChangeService', () => {
         VehicleNotFoundError,
       );
     });
+
+    it('restocks several colours as one change, so handlers run once with the overall totals', async () => {
+      const { handler, service } = setup(twoColours());
+
+      const vehicle = await service.apply('camry', {
+        kind: 'restock',
+        quantity: 5,
+        colours: [
+          { colourId: RED, quantity: 2 },
+          { colourId: WHITE, quantity: 3 },
+        ],
+      });
+
+      expect(vehicle.colours.map((c) => [c.id, c.quantity])).toEqual([
+        [RED, 3],
+        [WHITE, 7],
+      ]);
+      expect(handler.events).toHaveLength(1);
+      expect(handler.events[0]!.event).toMatchObject({ before: 5, after: 10 });
+    });
+
+    it('refuses the whole restock when any colour is not this vehicle’s', async () => {
+      const { runner, service } = setup(twoColours());
+
+      const err = await service
+        .apply('camry', {
+          kind: 'restock',
+          quantity: 2,
+          colours: [
+            { colourId: RED, quantity: 1 },
+            { colourId: 'c-other', quantity: 1 },
+          ],
+        })
+        .catch((e) => e);
+
+      expect(err).toBeInstanceOf(ValidationError);
+      expect(runner.rolledBack).toBe(1);
+    });
   });
 
   describe('receive (adding colours, or units of them, to an existing model)', () => {

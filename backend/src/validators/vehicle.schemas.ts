@@ -146,6 +146,7 @@ export const restockSchema = z.strictObject({
   quantity: quantity.min(1, 'must be at least 1'),
   /** Required by the service when the model has several colours. */
   colourId: z.uuid('must be a valid id').optional(),
+  colours: z.never().optional(),
 });
 
 /** For endpoints that take no body: anything sent is a client trying to set fields it does not own. */

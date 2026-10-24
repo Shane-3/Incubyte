@@ -255,6 +255,54 @@ describe('colour variants', () => {
       expect(res.body.vehicle.colours.find((c: ColourBody) => c.id === redId).quantity).toBe(6);
     });
 
+    it('restocks several colours in one request, notifying watchers once', async () => {
+      const created = await add({
+        ...buildVehicle({ quantity: 0 }),
+        colours: [
+          { ...RED, quantity: 0 },
+          { ...WHITE, quantity: 0 },
+        ],
+      });
+      const [red, white] = created.body.vehicle.colours as ColourBody[];
+      const watcher = await api.login('user');
+      await api.mutate('post', `/api/vehicles/${created.body.vehicle.id}/watch`, watcher.cookie);
+
+      const res = await api
+        .mutate('post', `/api/vehicles/${created.body.vehicle.id}/restock`, admin)
+        .send({
+          quantity: 7,
+          colours: [
+            { colourId: red!.id, quantity: 4 },
+            { colourId: white!.id, quantity: 3 },
+          ],
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.vehicle.quantity).toBe(7);
+      expect(res.body.vehicle.colours.map((c: ColourBody) => c.quantity)).toEqual([4, 3]);
+      const { rows } = await pool.query(`SELECT count(*)::int AS n FROM notifications WHERE type = 'BACK_IN_STOCK'`);
+      expect(rows[0].n).toBe(1);
+      expect(await totalsAgree()).toBe(true);
+    });
+
+    it('refuses a restock naming a colour of another vehicle and changes nothing', async () => {
+      const { id, redId } = await camryInRedAndWhite(1, 4);
+      const civic = await add({ ...buildVehicle({ make: 'Honda', model: 'Civic', quantity: 1 }), colour: RED });
+
+      const res = await api
+        .mutate('post', `/api/vehicles/${id}/restock`, admin)
+        .send({
+          quantity: 2,
+          colours: [
+            { colourId: redId, quantity: 1 },
+            { colourId: civic.body.vehicle.colours[0].id, quantity: 1 },
+          ],
+        });
+
+      expect(res.status).toBe(400);
+      expect((await api.vehicles.findById(id))!.quantity).toBe(5);
+    });
+
     it('requires a colour to restock a model with several', async () => {
       const { id } = await camryInRedAndWhite();
 

@@ -161,6 +161,33 @@ describe('purchaseSchema and restockSchema', () => {
     expect(failedFields(purchaseSchema.safeParse({ colourId: 'red' }))).toEqual(['colourId']);
     expect(failedFields(restockSchema.safeParse({ quantity: 1, colourId: "1' OR '1'='1" }))).toEqual(['colourId']);
   });
+
+  describe('restocking several colours', () => {
+    const other = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
+
+    it('accepts units per colour that total the quantity, allowing zero for some', () => {
+      const body = {
+        quantity: 5,
+        colours: [
+          { colourId, quantity: 5 },
+          { colourId: other, quantity: 0 },
+        ],
+      };
+
+      expect(restockSchema.parse(body)).toEqual(body);
+    });
+
+    it.each([
+      ['quantity', { quantity: 9, colours: [{ colourId, quantity: 2 }] }],
+      ['colours.1.colourId', { quantity: 2, colours: [{ colourId, quantity: 1 }, { colourId, quantity: 1 }] }],
+      ['colours.0.quantity', { quantity: 1, colours: [{ colourId, quantity: -1 }] }],
+      ['colours.0.colourId', { quantity: 1, colours: [{ colourId: 'red', quantity: 1 }] }],
+      ['colours', { quantity: 1, colourId, colours: [{ colourId, quantity: 1 }] }],
+      ['colours', { quantity: 1, colours: [] }],
+    ])('rejects a bad %s', (field, body) => {
+      expect(failedFields(restockSchema.safeParse(body))).toContain(field);
+    });
+  });
 });
 
 describe('updateVehicleSchema', () => {
