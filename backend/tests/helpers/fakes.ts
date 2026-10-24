@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { UnauthenticatedError } from '../../src/errors';
 import type { NewUser, User } from '../../src/types/user';
 import type { IUserRepository } from '../../src/repositories/user.repository';
 import type { IPasswordHasher } from '../../src/services/password-hasher';
@@ -19,6 +20,10 @@ export class InMemoryUserRepository implements IUserRepository {
     const user: User = { id: randomUUID(), createdAt: new Date(), ...input };
     this.users.set(user.id, user);
     return user;
+  }
+
+  size(): number {
+    return this.users.size;
   }
 
   /** Test-only: insert a user directly, e.g. an admin. */
@@ -58,7 +63,7 @@ export class FakeTokenService implements ITokenService {
   verify(token: string): TokenPayload {
     const [prefix, sub, role] = token.split(':');
     if (prefix !== 'token' || !sub || (role !== 'user' && role !== 'admin')) {
-      throw new Error('invalid token');
+      throw new UnauthenticatedError();
     }
     return { sub, role };
   }
