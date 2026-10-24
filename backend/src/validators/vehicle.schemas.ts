@@ -65,7 +65,11 @@ const colour = z.strictObject({
 const modelFields = { make: name, model: name, category, price, quantity };
 
 /** Adding an existing make + model adds the colour (or units of it) to that model. */
-export const createVehicleSchema = z.strictObject({ ...modelFields, colour: colour.optional() });
+export const createVehicleSchema = z.strictObject({
+  ...modelFields,
+  colour: colour.optional(),
+  colours: z.never().optional(),
+});
 
 export const updateVehicleSchema = z
   .strictObject(modelFields)

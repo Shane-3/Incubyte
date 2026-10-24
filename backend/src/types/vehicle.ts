@@ -12,6 +12,9 @@ export interface Colour {
 
 export type ColourInput = Pick<Colour, 'name' | 'hex'>;
 
+/** A colour together with the units of it being added. */
+export type ColourStock = ColourInput & { quantity: number };
+
 /** The colour a model gets when none is given, so the original single-stock API keeps working. */
 export const DEFAULT_COLOUR: ColourInput = { name: 'Standard', hex: '#8a8f98' };
 
@@ -33,9 +36,19 @@ export interface Vehicle {
 /** A vehicle as one signed-in user sees it in lists. */
 export type VehicleView = Vehicle & { isWatching: boolean };
 
+/**
+ * Stock to add. Either one colour holding all of `quantity`, several `colours` with their own units (summing to
+ * `quantity`), or neither (one Standard colour).
+ */
 export type NewVehicle = Pick<Vehicle, 'make' | 'model' | 'category' | 'price' | 'quantity'> & {
   colour?: ColourInput;
+  colours?: ColourStock[];
 };
+
+/** The per-colour stock a NewVehicle describes, whichever form it came in. */
+export function stockByColour(_input: NewVehicle): ColourStock[] {
+  throw new Error('Not implemented');
+}
 /** Model-level fields an edit may change. Colours and the SKU are not edited this way. */
 export type VehicleChanges = Partial<Pick<Vehicle, 'make' | 'model' | 'category' | 'price' | 'quantity'>>;
 

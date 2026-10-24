@@ -59,6 +59,22 @@ describe('PgVehicleRepository', () => {
       ]);
     });
 
+    it('stores several colours with their own units, totalling them on the model', async () => {
+      const created = await repo.create({
+        ...buildVehicle({ quantity: 5 }),
+        colours: [
+          { name: 'Supersonic Red', hex: '#a3161a', quantity: 2 },
+          { name: 'Wind Chill Pearl', hex: '#edede8', quantity: 3 },
+        ],
+      });
+
+      expect(created.quantity).toBe(5);
+      expect(created.colours.map((c) => [c.name, c.quantity])).toEqual([
+        ['Supersonic Red', 2],
+        ['Wind Chill Pearl', 3],
+      ]);
+    });
+
     it('keeps SKUs unique when two models reduce to the same code', async () => {
       const first = await repo.create(buildVehicle({ make: 'Mazda', model: 'CX-5' }));
       const second = await repo.create(buildVehicle({ make: 'Mazda', model: 'CX5' }));

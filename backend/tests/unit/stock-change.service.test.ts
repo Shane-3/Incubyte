@@ -253,14 +253,13 @@ describe('StockChangeService', () => {
     });
   });
 
-  describe('receive (adding a colour, or units of it, to an existing model)', () => {
+  describe('receive (adding colours, or units of them, to an existing model)', () => {
     it('adds a new colour with its units', async () => {
       const { handler, service } = setup([['c-standard', 'Standard', 0]]);
 
       const vehicle = await service.apply('camry', {
         kind: 'receive',
-        quantity: 3,
-        colour: { name: 'Supersonic Red', hex: '#a3161a' },
+        colours: [{ name: 'Supersonic Red', hex: '#a3161a', quantity: 3 }],
       });
 
       expect(vehicle.colours.map((c) => [c.name, c.quantity])).toEqual([
@@ -275,12 +274,31 @@ describe('StockChangeService', () => {
 
       const vehicle = await service.apply('camry', {
         kind: 'receive',
-        quantity: 2,
-        colour: { name: 'supersonic red', hex: '#a3161a' },
+        colours: [{ name: 'supersonic red', hex: '#a3161a', quantity: 2 }],
       });
 
       expect(vehicle.colours).toHaveLength(2);
       expect(vehicle.colours.find((c) => c.id === RED)!.quantity).toBe(3);
+    });
+
+    it('receives several colours as one change, so handlers run once with the overall totals', async () => {
+      const { handler, service } = setup(twoColours());
+
+      const vehicle = await service.apply('camry', {
+        kind: 'receive',
+        colours: [
+          { name: 'Supersonic Red', hex: '#a3161a', quantity: 2 },
+          { name: 'Blueprint', hex: '#1f3a5f', quantity: 4 },
+        ],
+      });
+
+      expect(vehicle.colours.map((c) => [c.name, c.quantity])).toEqual([
+        ['Supersonic Red', 3],
+        ['Wind Chill Pearl', 4],
+        ['Blueprint', 4],
+      ]);
+      expect(handler.events).toHaveLength(1);
+      expect(handler.events[0]!.event).toMatchObject({ before: 5, after: 11 });
     });
   });
 

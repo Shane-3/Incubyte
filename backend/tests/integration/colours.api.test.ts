@@ -116,6 +116,57 @@ describe('colour variants', () => {
       expect(rows).toEqual([{ recipient_id: watcher.user.id }]);
     });
 
+    it('creates a model with several colours in one request', async () => {
+      const res = await add({
+        ...buildVehicle({ quantity: 5 }),
+        colours: [
+          { ...RED, quantity: 2 },
+          { ...WHITE, quantity: 3 },
+        ],
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body.vehicle.quantity).toBe(5);
+      expect(res.body.vehicle.colours.map((c: ColourBody) => [c.name, c.quantity])).toEqual([
+        [RED.name, 2],
+        [WHITE.name, 3],
+      ]);
+      expect(await totalsAgree()).toBe(true);
+    });
+
+    it('merges several colours into an existing model as one change, notifying watchers once', async () => {
+      const created = await add({ ...buildVehicle({ quantity: 0 }), colour: RED });
+      const watcher = await api.login('user');
+      await api.mutate('post', `/api/vehicles/${created.body.vehicle.id}/watch`, watcher.cookie);
+
+      const res = await add({
+        ...buildVehicle({ quantity: 6 }),
+        colours: [
+          { ...RED, quantity: 1 },
+          { ...WHITE, quantity: 2 },
+          { name: 'Blueprint', hex: '#1f3a5f', quantity: 3 },
+        ],
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body.merged).toBe(true);
+      expect(res.body.vehicle.colours.map((c: ColourBody) => [c.name, c.quantity])).toEqual([
+        [RED.name, 1],
+        [WHITE.name, 2],
+        ['Blueprint', 3],
+      ]);
+      const { rows } = await pool.query(`SELECT count(*)::int AS n FROM notifications WHERE type = 'BACK_IN_STOCK'`);
+      expect(rows[0].n).toBe(1);
+      expect(await totalsAgree()).toBe(true);
+    });
+
+    it('rejects a quantity that is not the total of the colours', async () => {
+      const res = await add({ ...buildVehicle({ quantity: 9 }), colours: [{ ...RED, quantity: 2 }] });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.details).toEqual([{ field: 'quantity', message: 'must equal the total of the colours (2)' }]);
+    });
+
     it('ends with one model when the same new model is added twice at once', async () => {
       const [a, b] = await Promise.all([
         add({ ...buildVehicle({ quantity: 1 }), colour: RED }),

@@ -1,7 +1,7 @@
 import { DuplicateModelError, type ErrorDetail, ModelExistsError, VehicleNotFoundError } from '../errors';
 import type { IVehicleRepository } from '../repositories/vehicle.repository';
 import {
-  DEFAULT_COLOUR,
+  stockByColour,
   type InventoryStats,
   type ListOptions,
   type NewVehicle,
@@ -72,8 +72,7 @@ export class VehicleService {
 
     return this.stockChanges.apply(model.id, {
       kind: 'receive',
-      quantity: input.quantity,
-      colour: input.colour ?? DEFAULT_COLOUR,
+      colours: stockByColour(input),
     });
   }
 

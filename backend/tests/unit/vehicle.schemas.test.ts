@@ -103,6 +103,46 @@ describe('createVehicleSchema', () => {
       ).toBe(false);
     });
   });
+
+  describe('colours (several at once, each with its own units)', () => {
+    const red = { name: 'Supersonic Red', hex: '#a3161a', quantity: 2 };
+    const white = { name: 'Wind Chill Pearl', hex: '#edede8', quantity: 3 };
+
+    it('accepts a list whose units add up to the quantity', () => {
+      const parsed = createVehicleSchema.parse({ ...camry, quantity: 5, colours: [red, { ...white, hex: '#EDEDE8' }] });
+
+      expect(parsed.colours).toEqual([red, white]);
+    });
+
+    it('requires the quantity to be the total of the colours', () => {
+      expect(failedFields(createVehicleSchema.safeParse({ ...camry, quantity: 9, colours: [red, white] }))).toEqual([
+        'quantity',
+      ]);
+    });
+
+    it.each([
+      [[{ ...red, quantity: -1 }], 'colours.0.quantity'],
+      [[{ ...red, quantity: 1.5 }], 'colours.0.quantity'],
+      [[{ ...red, hex: 'red' }], 'colours.0.hex'],
+      [[red, { ...white, name: 'SUPERSONIC RED' }], 'colours.1.name'],
+      [[], 'colours'],
+      [Array.from({ length: 13 }, (_, i) => ({ ...red, name: `Red ${i}`, quantity: 0 })), 'colours'],
+    ])('rejects %j', (colours, field) => {
+      const total = (colours as Array<{ quantity: number }>).reduce((sum, c) => sum + (c.quantity > 0 ? c.quantity : 0), 0);
+      expect(failedFields(createVehicleSchema.safeParse({ ...camry, quantity: total, colours }))).toContain(field);
+    });
+
+    it('refuses colour and colours together', () => {
+      const result = createVehicleSchema.safeParse({
+        ...camry,
+        quantity: 2,
+        colour: { name: 'Red', hex: '#a3161a' },
+        colours: [red],
+      });
+
+      expect(failedFields(result)).toEqual(['colours']);
+    });
+  });
 });
 
 describe('purchaseSchema and restockSchema', () => {

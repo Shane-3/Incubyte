@@ -81,12 +81,8 @@ export class StockChangeService {
     return this.stock.setStock(tx, current.id, only.id, change.quantity, change.fields);
   }
 
-  private async receive(tx: Queryable, current: Vehicle, change: Change<'receive'>) {
-    const name = change.colour.name.toLowerCase();
-    const colour =
-      current.colours.find((c) => c.name.toLowerCase() === name) ??
-      (await this.stock.addColour(tx, current.id, change.colour));
-    return this.stock.adjustColour(tx, current.id, colour.id, change.quantity);
+  private async receive(_tx: Queryable, _current: Vehicle, _change: Change<'receive'>): Promise<Vehicle> {
+    throw new Error('Not implemented');
   }
 
   private colourOf(vehicle: Vehicle, colourId: string): Colour {

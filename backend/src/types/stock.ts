@@ -1,5 +1,5 @@
 import type { Queryable } from '../db/transaction';
-import type { ColourInput, Vehicle, VehicleChanges } from './vehicle';
+import type { ColourStock, Vehicle, VehicleChanges } from './vehicle';
 
 export type StockChange =
   /** Without a colour, the sale comes from the best-stocked colour. */
@@ -8,8 +8,8 @@ export type StockChange =
   | { kind: 'restock'; quantity: number; colourId?: string }
   /** An edit (PUT) that sets the quantity of a single-colour model, applied with the other edited fields. */
   | { kind: 'set'; quantity: number; fields: VehicleChanges }
-  /** Adding stock of a colour to an existing model: creates the colour if it is new. */
-  | { kind: 'receive'; quantity: number; colour: ColourInput };
+  /** Adding stock of one or more colours to an existing model: new colours are created. One change, one event. */
+  | { kind: 'receive'; colours: ColourStock[] };
 
 /** What every handler sees after a stock write, inside the same transaction. Quantities are model totals. */
 export interface StockChangeEvent {
