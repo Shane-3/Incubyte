@@ -1,4 +1,4 @@
-import { NotFoundError } from '../errors';
+import { VehicleNotFoundError } from '../errors';
 import type { IVehicleRepository } from '../repositories/vehicle.repository';
 import type { ListOptions, NewVehicle, Page, Vehicle, VehicleChanges, VehicleFilters } from '../types/vehicle';
 
@@ -25,11 +25,5 @@ export class VehicleService {
     if (!(await this.vehicles.delete(id))) {
       throw new VehicleNotFoundError();
     }
-  }
-}
-
-export class VehicleNotFoundError extends NotFoundError {
-  constructor() {
-    super('Vehicle not found');
   }
 }

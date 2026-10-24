@@ -79,3 +79,18 @@ export class UnsupportedMediaTypeError extends AppError {
     super('Request body must be application/json');
   }
 }
+
+export class VehicleNotFoundError extends NotFoundError {
+  constructor() {
+    super('Vehicle not found');
+  }
+}
+
+export class OutOfStockError extends AppError {
+  readonly status = 409;
+  readonly code = 'OUT_OF_STOCK';
+
+  constructor(available: number) {
+    super(available === 0 ? 'Vehicle is out of stock' : `Only ${available} left in stock`);
+  }
+}
