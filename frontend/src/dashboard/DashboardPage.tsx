@@ -7,9 +7,19 @@ import { Button } from '../components/ui/Button';
 import type { MenuItem } from '../components/ui/Menu';
 import { pluralise } from '../lib/format';
 import { KpiStrip } from './KpiStrip';
+import { Pagination } from './Pagination';
+import { Toolbar } from './Toolbar';
 import { useForecast, useStats, useVehicles } from './queries';
-import { toVehicleQuery, useFilters } from './useFilters';
+import { type Filters, toVehicleQuery, useFilters } from './useFilters';
 import { VehicleTable } from './VehicleTable';
+
+function emptyMessage(hasFilters: boolean, stock: Filters['stock'], view: Filters['view']): string {
+  if (hasFilters) return 'No vehicles match your filters';
+  if (view === 'at-risk') return 'Nothing is at risk of selling out this week';
+  if (stock === 'low') return 'No vehicles are running low';
+  if (stock === 'out') return 'Nothing is sold out';
+  return 'No vehicles yet. Add the first one to start tracking stock.';
+}
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -69,6 +79,8 @@ export function DashboardPage() {
 
         <KpiStrip stats={stats.data} atRisk={atRiskCount} />
 
+        <Toolbar filters={filters} hasFilters={hasFilters} onChange={update} onClear={clear} />
+
         {vehicles.isError ? (
           <div
             role="alert"
@@ -84,7 +96,7 @@ export function DashboardPage() {
           </div>
         ) : !vehicles.isPending && rows.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-panel border border-border bg-surface px-6 py-16 text-center">
-            <p className="font-medium">{hasFilters ? 'No vehicles match your filters' : 'No vehicles yet'}</p>
+            <p className="font-medium">{emptyMessage(hasFilters, filters.stock, filters.view)}</p>
             {hasFilters && (
               <Button size="sm" onClick={clear}>
                 Clear filters
@@ -100,6 +112,17 @@ export function DashboardPage() {
             onSort={onSort}
             forecastById={forecastById}
             actions={{ primary: primaryFor, menu: menuFor }}
+            footer={
+              filters.view !== 'at-risk' && (
+                <Pagination
+                  page={filters.page}
+                  pageSize={filters.pageSize}
+                  count={count}
+                  onPage={(page) => update({ page })}
+                  onPageSize={(pageSize) => update({ pageSize })}
+                />
+              )
+            }
           />
         )}
       </div>
