@@ -6,7 +6,7 @@ import { baseSku } from '../services/sku';
 import {
   type Category,
   type Colour,
-  DEFAULT_COLOUR,
+  stockByColour,
   type InventoryStats,
   type ListOptions,
   type NewVehicle,
@@ -161,7 +161,10 @@ export class PgVehicleRepository implements IVehicleRepository {
    * Inserts the model and its first colour together. The SKU gets the first free -2, -3... suffix; a concurrent
    * insert of the same SKU is retried. A duplicate make + model raises DuplicateModelError for the merge path.
    */
-  async create({ make, model, category, price, quantity, colour = DEFAULT_COLOUR }: NewVehicle): Promise<Vehicle> {
+  async create(input: NewVehicle): Promise<Vehicle> {
+    const { make, model, category, price } = input;
+    const colours = stockByColour(input);
+    const quantity = colours.reduce((sum, c) => sum + c.quantity, 0);
     const base = baseSku(make, model);
     for (let attempt = 1; ; attempt++) {
       const client = await this.pool.connect();
@@ -173,12 +176,14 @@ export class PgVehicleRepository implements IVehicleRepository {
            VALUES ($1, $2, $3, $4, $5, $6) RETURNING ${COLUMNS}`,
           [sku, make, model, category, price, quantity],
         );
-        await client.query('INSERT INTO vehicle_colours (vehicle_id, name, hex, quantity) VALUES ($1, $2, $3, $4)', [
-          rows[0]!.id,
-          colour.name,
-          colour.hex,
-          quantity,
-        ]);
+        for (const colour of colours) {
+          await client.query('INSERT INTO vehicle_colours (vehicle_id, name, hex, quantity) VALUES ($1, $2, $3, $4)', [
+            rows[0]!.id,
+            colour.name,
+            colour.hex,
+            colour.quantity,
+          ]);
+        }
         const [created] = await withColours(client, rows);
         await client.query('COMMIT');
         return toVehicle(created!, created!.colours);

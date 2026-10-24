@@ -62,14 +62,40 @@ const colour = z.strictObject({
     .transform((value) => value.toLowerCase()),
 });
 
+export const MAX_COLOURS_PER_REQUEST = 12;
+
+const colours = z
+  .array(colour.extend({ quantity }))
+  .min(1, 'must list at least one colour')
+  .max(MAX_COLOURS_PER_REQUEST, `must list at most ${MAX_COLOURS_PER_REQUEST} colours`)
+  .superRefine((list, ctx) => {
+    const seen = new Set<string>();
+    list.forEach((c, i) => {
+      const key = c.name.toLowerCase();
+      if (seen.has(key)) ctx.addIssue({ code: 'custom', path: [i, 'name'], message: 'is listed twice' });
+      seen.add(key);
+    });
+  });
+
 const modelFields = { make: name, model: name, category, price, quantity };
 
-/** Adding an existing make + model adds the colour (or units of it) to that model. */
-export const createVehicleSchema = z.strictObject({
-  ...modelFields,
-  colour: colour.optional(),
-  colours: z.never().optional(),
-});
+/**
+ * One colour for all of `quantity`, or several `colours` with their own units totalling `quantity`. Adding an
+ * existing make + model adds the colours (or units of them) to that model.
+ */
+export const createVehicleSchema = z
+  .strictObject({ ...modelFields, colour: colour.optional(), colours: colours.optional() })
+  .superRefine((input, ctx) => {
+    if (!input.colours) return;
+    if (input.colour) {
+      ctx.addIssue({ code: 'custom', path: ['colours'], message: 'send either colour or colours, not both' });
+      return;
+    }
+    const total = input.colours.reduce((sum, c) => sum + c.quantity, 0);
+    if (input.quantity !== total) {
+      ctx.addIssue({ code: 'custom', path: ['quantity'], message: `must equal the total of the colours (${total})` });
+    }
+  });
 
 export const updateVehicleSchema = z
   .strictObject(modelFields)

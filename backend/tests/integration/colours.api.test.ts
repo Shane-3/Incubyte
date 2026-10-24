@@ -164,7 +164,9 @@ describe('colour variants', () => {
       const res = await add({ ...buildVehicle({ quantity: 9 }), colours: [{ ...RED, quantity: 2 }] });
 
       expect(res.status).toBe(400);
-      expect(res.body.error.details).toEqual([{ field: 'quantity', message: 'must equal the total of the colours (2)' }]);
+      expect(res.body.error.details).toEqual([
+        { field: 'quantity', message: 'must equal the total of the colours (2)' },
+      ]);
     });
 
     it('ends with one model when the same new model is added twice at once', async () => {

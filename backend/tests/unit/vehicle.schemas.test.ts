@@ -128,7 +128,10 @@ describe('createVehicleSchema', () => {
       [[], 'colours'],
       [Array.from({ length: 13 }, (_, i) => ({ ...red, name: `Red ${i}`, quantity: 0 })), 'colours'],
     ])('rejects %j', (colours, field) => {
-      const total = (colours as Array<{ quantity: number }>).reduce((sum, c) => sum + (c.quantity > 0 ? c.quantity : 0), 0);
+      const total = (colours as Array<{ quantity: number }>).reduce(
+        (sum, c) => sum + (c.quantity > 0 ? c.quantity : 0),
+        0,
+      );
       expect(failedFields(createVehicleSchema.safeParse({ ...camry, quantity: total, colours }))).toContain(field);
     });
 

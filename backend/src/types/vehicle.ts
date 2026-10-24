@@ -46,8 +46,8 @@ export type NewVehicle = Pick<Vehicle, 'make' | 'model' | 'category' | 'price' |
 };
 
 /** The per-colour stock a NewVehicle describes, whichever form it came in. */
-export function stockByColour(_input: NewVehicle): ColourStock[] {
-  throw new Error('Not implemented');
+export function stockByColour({ colour, colours, quantity }: NewVehicle): ColourStock[] {
+  return colours ?? [{ ...(colour ?? DEFAULT_COLOUR), quantity }];
 }
 /** Model-level fields an edit may change. Colours and the SKU are not edited this way. */
 export type VehicleChanges = Partial<Pick<Vehicle, 'make' | 'model' | 'category' | 'price' | 'quantity'>>;

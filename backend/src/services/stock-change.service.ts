@@ -81,8 +81,17 @@ export class StockChangeService {
     return this.stock.setStock(tx, current.id, only.id, change.quantity, change.fields);
   }
 
-  private async receive(_tx: Queryable, _current: Vehicle, _change: Change<'receive'>): Promise<Vehicle> {
-    throw new Error('Not implemented');
+  /** Each colour is matched by name (case-insensitive) or created, then gets its units; all in this one change. */
+  private async receive(tx: Queryable, current: Vehicle, change: Change<'receive'>): Promise<Vehicle> {
+    let vehicle = current;
+    for (const { quantity, ...paint } of change.colours) {
+      const name = paint.name.toLowerCase();
+      const colour =
+        vehicle.colours.find((c) => c.name.toLowerCase() === name) ??
+        (await this.stock.addColour(tx, current.id, paint));
+      vehicle = await this.stock.adjustColour(tx, current.id, colour.id, quantity);
+    }
+    return vehicle;
   }
 
   private colourOf(vehicle: Vehicle, colourId: string): Colour {
