@@ -35,9 +35,8 @@ function apiFor(user = priya, vehicles: Vehicle[] = [camry, rav4, crv, f150]) {
 
 async function rowFor(name: string) {
   const table = await screen.findByRole('table', { name: 'Vehicles' });
-  const row = within(table)
-    .getAllByRole('row')
-    .find((r) => within(r).queryByText(name));
+  const cell = await within(table).findByText(name);
+  const row = cell.closest('tr');
   if (!row) throw new Error(`no row for ${name}`);
   return row;
 }
@@ -109,7 +108,9 @@ describe('role-based controls', () => {
   it('gives regular users Edit but not Restock or Delete', async () => {
     const { user } = renderApp({ api: apiFor(priya) });
 
-    await user.click(within(await rowFor('Toyota Camry')).getByRole('button', { name: 'More actions for Toyota Camry' }));
+    await user.click(
+      within(await rowFor('Toyota Camry')).getByRole('button', { name: 'More actions for Toyota Camry' }),
+    );
 
     const menu = screen.getByRole('menu');
     expect(within(menu).getByRole('menuitem', { name: 'Edit' })).toBeInTheDocument();
@@ -120,10 +121,16 @@ describe('role-based controls', () => {
   it('gives admins Edit, Restock and Delete', async () => {
     const { user } = renderApp({ api: apiFor(dana) });
 
-    await user.click(within(await rowFor('Toyota Camry')).getByRole('button', { name: 'More actions for Toyota Camry' }));
+    await user.click(
+      within(await rowFor('Toyota Camry')).getByRole('button', { name: 'More actions for Toyota Camry' }),
+    );
 
     const menu = screen.getByRole('menu');
-    expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Edit', 'Restock', 'Delete']);
+    expect(
+      within(menu)
+        .getAllByRole('menuitem')
+        .map((i) => i.textContent),
+    ).toEqual(['Edit', 'Restock', 'Delete']);
   });
 
   it('lets anyone add a vehicle', async () => {
