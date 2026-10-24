@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { EmailTakenError, InvalidCredentialsError } from '../errors';
+import { EmailTakenError, InvalidCredentialsError, UnauthenticatedError } from '../errors';
 import type { IUserRepository } from '../repositories/user.repository';
 import type { PublicUser, User } from '../types/user';
 import type { IPasswordHasher } from './password-hasher';
@@ -55,6 +55,15 @@ export class AuthService {
 
     const token = this.tokens.sign({ sub: user.id, role: user.role });
     return { user: toPublicUser(user), token };
+  }
+
+  /** The session's user, re-read from the store so deleted accounts lose access immediately. */
+  async getCurrentUser(id: string): Promise<PublicUser> {
+    const user = await this.users.findById(id);
+    if (!user) {
+      throw new UnauthenticatedError();
+    }
+    return toPublicUser(user);
   }
 
   private dummyHashPromise?: Promise<string>;

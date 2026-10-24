@@ -43,3 +43,30 @@ export class UnauthenticatedError extends AppError {
     super('Authentication required');
   }
 }
+
+export class ValidationError extends AppError {
+  readonly status = 400;
+  readonly code = 'VALIDATION_ERROR';
+
+  constructor(details: ErrorDetail[], message = 'Request validation failed') {
+    super(message, details);
+  }
+}
+
+export class ForbiddenError extends AppError {
+  readonly status = 403;
+  readonly code = 'FORBIDDEN';
+
+  constructor(message = 'You do not have permission to do that') {
+    super(message);
+  }
+}
+
+export class NotFoundError extends AppError {
+  readonly status = 404;
+  readonly code = 'NOT_FOUND';
+
+  constructor(message = 'Not found') {
+    super(message);
+  }
+}
