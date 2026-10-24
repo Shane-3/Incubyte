@@ -6,7 +6,9 @@ import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/ui/Button';
 import type { MenuItem } from '../components/ui/Menu';
 import { pluralise } from '../lib/format';
+import { Freshness } from './Freshness';
 import { KpiStrip } from './KpiStrip';
+import { useInvalidateInventory } from './mutations';
 import { Pagination } from './Pagination';
 import { RowControls } from './RowControls';
 import { Toolbar } from './Toolbar';
@@ -73,6 +75,7 @@ export function DashboardPage() {
   const vehicles = useVehicles(query);
   const stats = useStats();
   const forecast = useForecast(isAdmin);
+  const invalidate = useInvalidateInventory();
   const [panel, setPanel] = useState<Panel | null>(null);
 
   const forecastById = useMemo(
@@ -112,7 +115,19 @@ export function DashboardPage() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold">Inventory</h1>
-            <p className="text-sm text-muted">{vehicles.data ? pluralise(count, 'vehicle') : ' '}</p>
+            <p className="flex items-center gap-2 text-sm text-muted">
+              <span>{vehicles.data ? pluralise(count, 'vehicle') : ' '}</span>
+              {vehicles.dataUpdatedAt > 0 && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <Freshness
+                    updatedAt={vehicles.dataUpdatedAt}
+                    refreshing={vehicles.isFetching}
+                    onRefresh={() => void invalidate()}
+                  />
+                </>
+              )}
+            </p>
           </div>
           <Button variant="primary" onClick={() => setPanel({ kind: 'add' })}>
             <Plus aria-hidden="true" className="size-4" strokeWidth={1.75} />
@@ -120,7 +135,7 @@ export function DashboardPage() {
           </Button>
         </div>
 
-        <KpiStrip stats={stats.data} atRisk={atRiskCount} />
+        <KpiStrip stats={stats.data} atRisk={atRiskCount} atRiskDays={forecast.data?.atRiskDays} />
 
         <Toolbar filters={filters} hasFilters={hasFilters} onChange={update} onClear={clear} />
 

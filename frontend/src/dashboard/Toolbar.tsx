@@ -1,5 +1,5 @@
 import { SlidersHorizontal, X } from 'lucide-react';
-import { type ReactNode, useEffect, useId, useState } from 'react';
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { CATEGORIES } from '../api/types';
 import { Button } from '../components/ui/Button';
 import { formatPrice } from '../lib/format';
@@ -48,6 +48,23 @@ export function Toolbar({ filters, hasFilters, onChange, onClear }: ToolbarProps
     maxPrice: filters.maxPrice,
   });
   const [open, setOpen] = useState(false);
+  const makeInput = useRef<HTMLInputElement>(null);
+
+  // "/" jumps to the filters from anywhere on the page, unless the user is already typing somewhere.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) return;
+      event.preventDefault();
+      setOpen(true);
+      // The panel may have just been revealed on small screens; focus after it renders.
+      requestAnimationFrame(() => makeInput.current?.focus());
+      makeInput.current?.focus();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   // Follow the URL when it changes from elsewhere (Clear, chips, sidebar).
   useEffect(() => {
@@ -104,7 +121,23 @@ export function Toolbar({ filters, hasFilters, onChange, onClear }: ToolbarProps
       >
         <Field label="Make">
           {(id) => (
-            <input id={id} className={inputClass} value={draft.make} onChange={set('make')} placeholder="Any make" />
+            <span className="relative block">
+              <input
+                id={id}
+                ref={makeInput}
+                className={`${inputClass} pr-8`}
+                value={draft.make}
+                onChange={set('make')}
+                placeholder="Any make"
+                aria-keyshortcuts="/"
+              />
+              <kbd
+                aria-hidden="true"
+                className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded border border-border px-1 font-sans text-xs leading-4 text-muted max-md:hidden"
+              >
+                /
+              </kbd>
+            </span>
           )}
         </Field>
         <Field label="Model">

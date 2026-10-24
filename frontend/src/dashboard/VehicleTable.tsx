@@ -64,12 +64,17 @@ function SortHeader({
       <button
         type="button"
         onClick={() => onSort(field)}
-        className={`inline-flex items-center gap-1 rounded-control hover:text-text ${active ? 'text-text' : ''} ${
+        // Right-aligned columns put the icon first so the label stays flush with the numbers below.
+        className={`group inline-flex items-center gap-1 rounded-control hover:text-text ${active ? 'text-text' : ''} ${
           align === 'right' ? 'flex-row-reverse' : ''
         }`}
       >
         {label}
-        <Icon aria-hidden="true" className="size-3.5" strokeWidth={1.5} />
+        <Icon
+          aria-hidden="true"
+          className={`size-3.5 ${active ? '' : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'}`}
+          strokeWidth={1.5}
+        />
       </button>
     </th>
   );
@@ -157,7 +162,7 @@ export function VehicleTable({
                         <CarIllustration
                           category={v.category}
                           hex={thumbnailColour(v)}
-                          className="h-7 w-[70px] shrink-0 max-sm:hidden"
+                          className={`h-7 w-[70px] shrink-0 max-sm:hidden ${v.quantity === 0 ? 'opacity-45 grayscale' : ''}`}
                         />
                         <span className="min-w-0">
                           <button
