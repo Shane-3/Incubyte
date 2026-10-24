@@ -34,3 +34,12 @@ export class InvalidCredentialsError extends AppError {
     super('Invalid email or password');
   }
 }
+
+export class UnauthenticatedError extends AppError {
+  readonly status = 401;
+  readonly code = 'UNAUTHENTICATED';
+
+  constructor() {
+    super('Authentication required');
+  }
+}
