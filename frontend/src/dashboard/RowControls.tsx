@@ -59,7 +59,7 @@ function PurchaseControl({ vehicle }: { vehicle: Vehicle }) {
         Purchase
       </Button>
       {open && (
-        <Popover label={`Purchase ${name}`} onClose={() => setOpen(false)} className="w-72 p-3">
+        <Popover label={`Purchase ${name}`} onClose={() => setOpen(false)} className="w-80 p-3">
           <p className="mb-2.5 truncate font-medium">{name}</p>
           {several && colour && (
             <div className="mb-3">

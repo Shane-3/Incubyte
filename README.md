@@ -43,8 +43,10 @@ Car pictures are built-in side-view illustrations for each body style (sedan, SU
 | At-risk view with days left | Restock pre-filled from the forecast |
 | ![Dark theme](docs/screenshots/06-dark.png) | ![Out of stock, regular user](docs/screenshots/07-user-out-of-stock.png) |
 | Dark theme | Regular user: sold-out view with Notify me |
-| ![Purchase](docs/screenshots/08-purchase-popover.png) | ![Mobile](docs/screenshots/02-admin-360.png) |
-| Purchase popover | 360 px |
+| ![Purchase](docs/screenshots/08-purchase-popover.png) | ![Vehicle detail](docs/screenshots/09-vehicle-detail.png) |
+| Purchase in a chosen colour | Vehicle detail: the car repainted per colour |
+| ![Mobile](docs/screenshots/02-admin-360.png) | |
+| 360 px (stacked rows, Sort by select) | |
 
 ## Run it locally
 
