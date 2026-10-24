@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { createApp, type AppDeps } from '../../src/app';
 import type { Role } from '../../src/types/user';
-import { FakePasswordHasher, FakeTokenService, InMemoryUserRepository } from './fakes';
+import { FakePasswordHasher, FakeTokenService, InMemoryUserRepository, unusedRepository } from './fakes';
 
 export const FRONTEND_ORIGIN = 'http://localhost:5173';
 
@@ -10,6 +10,7 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
   const tokens = new FakeTokenService();
   const deps: AppDeps = {
     users,
+    vehicles: unusedRepository('vehicles'),
     hasher: new FakePasswordHasher(),
     tokens,
     config: { env: 'test', corsOrigin: FRONTEND_ORIGIN, jwtExpiresInSeconds: 3600 },

@@ -7,6 +7,7 @@ import { requireJsonBody, requireTrustedOrigin } from './middleware/csrf';
 import { errorHandler, notFound } from './middleware/error-handler';
 import { securityHeaders } from './middleware/security-headers';
 import type { IUserRepository } from './repositories/user.repository';
+import type { IVehicleRepository } from './repositories/vehicle.repository';
 import { authRoutes } from './routes/auth.routes';
 import { AuthService } from './services/auth.service';
 import type { IPasswordHasher } from './services/password-hasher';
@@ -14,6 +15,7 @@ import type { ITokenService } from './services/token.service';
 
 export interface AppDeps {
   users: IUserRepository;
+  vehicles: IVehicleRepository;
   hasher: IPasswordHasher;
   tokens: ITokenService;
   config: Pick<Config, 'env' | 'corsOrigin' | 'jwtExpiresInSeconds'>;

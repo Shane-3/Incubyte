@@ -68,3 +68,14 @@ export class FakeTokenService implements ITokenService {
     return { sub, role };
   }
 }
+
+/** Stands in for a dependency a test must not touch; any call fails the test loudly. */
+export function unusedRepository<T extends object>(name: string): T {
+  return new Proxy({} as T, {
+    get(_target, prop) {
+      return () => {
+        throw new Error(`${name}.${String(prop)} should not be called in this test`);
+      };
+    },
+  });
+}
