@@ -1,14 +1,5 @@
 import type { ApiClient } from './client';
-import type {
-  ForecastReport,
-  Inbox,
-  InventoryStats,
-  Page,
-  User,
-  Vehicle,
-  VehicleInput,
-  VehicleQuery,
-} from './types';
+import type { ForecastReport, Inbox, InventoryStats, Page, User, Vehicle, VehicleInput, VehicleQuery } from './types';
 
 /** Typed wrappers over the REST API. Components reach these through useApi(), so tests can swap in fakes. */
 export function createEndpoints(client: ApiClient) {

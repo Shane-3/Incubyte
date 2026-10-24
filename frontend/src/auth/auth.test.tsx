@@ -146,7 +146,9 @@ describe('create account', () => {
   it('maps validation details from the API onto fields', async () => {
     const api = signedOut();
     api.auth.register.mockRejectedValue(
-      new ApiError(400, 'VALIDATION_ERROR', 'Request validation failed', [{ field: 'password', message: 'is too common' }]),
+      new ApiError(400, 'VALIDATION_ERROR', 'Request validation failed', [
+        { field: 'password', message: 'is too common' },
+      ]),
     );
     const { user } = renderApp({ api, route: '/register' });
 
@@ -155,6 +157,8 @@ describe('create account', () => {
     await user.type(screen.getByLabelText('Password'), 'password123');
     await user.click(screen.getByRole('button', { name: 'Create account' }));
 
-    await waitFor(() => expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('Password is too common'));
+    await waitFor(() =>
+      expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('Password is too common'),
+    );
   });
 });
