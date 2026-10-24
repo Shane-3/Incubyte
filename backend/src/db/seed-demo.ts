@@ -1,5 +1,6 @@
 import type { Pool } from 'pg';
-import type { Category } from '../types/vehicle';
+import { baseSku } from '../services/sku';
+import type { Category, ColourInput } from '../types/vehicle';
 
 export interface SeedOptions {
   now: Date;
@@ -51,6 +52,100 @@ const LOT: DemoVehicle[] = [
   { make: 'Mini', model: 'Cooper', category: 'Hatchback', price: 29500, quantity: 6, sold: 2 },
 ];
 
+// Factory paint names per make; hex values are close approximations for the illustrations.
+const PAINTS: Record<string, ColourInput[]> = {
+  Toyota: [
+    { name: 'Midnight Black Metallic', hex: '#1c1d21' },
+    { name: 'Wind Chill Pearl', hex: '#edede8' },
+    { name: 'Supersonic Red', hex: '#a3161a' },
+    { name: 'Celestial Silver Metallic', hex: '#a7abaf' },
+  ],
+  Honda: [
+    { name: 'Crystal Black Pearl', hex: '#111214' },
+    { name: 'Platinum White Pearl', hex: '#ecebe6' },
+    { name: 'Radiant Red Metallic', hex: '#8e1a1f' },
+    { name: 'Aegean Blue Metallic', hex: '#2c4a6e' },
+  ],
+  Ford: [
+    { name: 'Agate Black', hex: '#121314' },
+    { name: 'Oxford White', hex: '#f1f1ee' },
+    { name: 'Rapid Red Metallic', hex: '#8b1c22' },
+    { name: 'Atlas Blue', hex: '#1e3b5c' },
+  ],
+  Chevrolet: [
+    { name: 'Black', hex: '#111111' },
+    { name: 'Summit White', hex: '#f2f2ef' },
+    { name: 'Radiant Red Tintcoat', hex: '#921b22' },
+    { name: 'Sterling Gray Metallic', hex: '#6a6e72' },
+  ],
+  Tesla: [
+    { name: 'Pearl White Multi-Coat', hex: '#ecebe8' },
+    { name: 'Solid Black', hex: '#121212' },
+    { name: 'Deep Blue Metallic', hex: '#1d2f4f' },
+    { name: 'Ultra Red', hex: '#a1131a' },
+  ],
+  Hyundai: [
+    { name: 'Phantom Black', hex: '#141518' },
+    { name: 'Serenity White', hex: '#eeeeea' },
+    { name: 'Intense Blue', hex: '#20406b' },
+    { name: 'Amazon Gray', hex: '#5f6669' },
+  ],
+  Kia: [
+    { name: 'Ebony Black', hex: '#141414' },
+    { name: 'Snow White Pearl', hex: '#efefeb' },
+    { name: 'Wolf Gray', hex: '#6b6e70' },
+    { name: 'Dawning Red', hex: '#8d1d22' },
+  ],
+  Volkswagen: [
+    { name: 'Deep Black Pearl', hex: '#161719' },
+    { name: 'Pure White', hex: '#f2f2f0' },
+    { name: 'Kings Red Metallic', hex: '#8f1c21' },
+    { name: 'Moonstone Gray', hex: '#8c8f91' },
+  ],
+  Mazda: [
+    { name: 'Soul Red Crystal Metallic', hex: '#9b1b1e' },
+    { name: 'Jet Black Mica', hex: '#151617' },
+    { name: 'Snowflake White Pearl', hex: '#eeeeea' },
+    { name: 'Machine Gray Metallic', hex: '#5c5f62' },
+  ],
+  Subaru: [
+    { name: 'Crystal White Pearl', hex: '#ececea' },
+    { name: 'Crystal Black Silica', hex: '#141518' },
+    { name: 'Autumn Green Metallic', hex: '#3d4a3a' },
+    { name: 'Cosmic Blue Pearl', hex: '#22355a' },
+  ],
+  BMW: [
+    { name: 'Black Sapphire Metallic', hex: '#15171a' },
+    { name: 'Alpine White', hex: '#f0f0ee' },
+    { name: 'Portimao Blue Metallic', hex: '#1d4e8f' },
+    { name: 'Mineral Grey Metallic', hex: '#5f6366' },
+  ],
+  'Mercedes-Benz': [
+    { name: 'Obsidian Black Metallic', hex: '#141518' },
+    { name: 'Polar White', hex: '#f1f1ef' },
+    { name: 'Selenite Grey Metallic', hex: '#6c6f72' },
+    { name: 'Spectral Blue Metallic', hex: '#233a5c' },
+  ],
+  Audi: [
+    { name: 'Mythos Black Metallic', hex: '#141517' },
+    { name: 'Glacier White Metallic', hex: '#ededea' },
+    { name: 'Navarra Blue Metallic', hex: '#1f3657' },
+    { name: 'Tango Red Metallic', hex: '#8f1b22' },
+  ],
+  Chrysler: [
+    { name: 'Brilliant Black Crystal Pearl', hex: '#121314' },
+    { name: 'Bright White', hex: '#f2f2f0' },
+    { name: 'Velvet Red Pearl', hex: '#7a1820' },
+    { name: 'Ceramic Grey', hex: '#8e9092' },
+  ],
+  Mini: [
+    { name: 'Chili Red', hex: '#b31b20' },
+    { name: 'Midnight Black', hex: '#141516' },
+    { name: 'Pepper White', hex: '#eeede8' },
+    { name: 'British Racing Green IV', hex: '#1f3b2d' },
+  ],
+};
+
 const DAY_MS = 86_400_000;
 const LOW_STOCK_THRESHOLD = 3;
 
@@ -84,23 +179,40 @@ export async function seedDemoData(pool: Pool, { now }: SeedOptions): Promise<vo
     const buyerId = buyer[0]!.id;
 
     const next = random(42);
-    for (const v of LOT) {
+    for (const [index, v] of LOT.entries()) {
+      const listedAt = new Date(now.getTime() - 45 * DAY_MS);
       const { rows } = await client.query<{ id: string }>(
-        `INSERT INTO vehicles (make, model, category, price, quantity, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $6) RETURNING id`,
-        [v.make, v.model, v.category, v.price, v.quantity, new Date(now.getTime() - 45 * DAY_MS)],
+        `INSERT INTO vehicles (sku, make, model, category, price, quantity, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $7) RETURNING id`,
+        [baseSku(v.make, v.model), v.make, v.model, v.category, v.price, v.quantity, listedAt],
       );
       const vehicleId = rows[0]!.id;
 
+      // Two to four colours per model, with the stock spread across them.
+      const palette = PAINTS[v.make]!.slice(0, 2 + (index % 3));
+      const units = palette.map(() => 0);
+      for (let i = 0; i < v.quantity; i++) units[Math.floor(next() * palette.length)]! += 1;
+      const colourIds: string[] = [];
+      for (const [i, paint] of palette.entries()) {
+        const { rows: colour } = await client.query<{ id: string }>(
+          `INSERT INTO vehicle_colours (vehicle_id, name, hex, quantity, created_at)
+           VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+          [vehicleId, paint.name, paint.hex, units[i], new Date(listedAt.getTime() + i * 1000)],
+        );
+        colourIds.push(colour[0]!.id);
+      }
+
       let remaining = v.sold;
       while (remaining > 0) {
-        const units = remaining > 1 && next() < 0.2 ? 2 : 1;
+        const sold = remaining > 1 && next() < 0.2 ? 2 : 1;
         const at = new Date(now.getTime() - (0.01 + next() * 29.9) * DAY_MS);
+        const colourId = colourIds[Math.floor(next() * colourIds.length)];
         await client.query(
-          'INSERT INTO purchases (vehicle_id, user_id, quantity, unit_price, created_at) VALUES ($1, $2, $3, $4, $5)',
-          [vehicleId, buyerId, units, v.price, at],
+          `INSERT INTO purchases (vehicle_id, colour_id, user_id, quantity, unit_price, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [vehicleId, colourId, buyerId, sold, v.price, at],
         );
-        remaining -= units;
+        remaining -= sold;
       }
 
       // Admins who already exist see the lot's current low and sold-out stock straight away.

@@ -134,7 +134,9 @@ describe('colour variants', () => {
     it('sells from the chosen colour and records it', async () => {
       const { id, whiteId } = await camryInRedAndWhite();
 
-      const res = await api.mutate('post', `/api/vehicles/${id}/purchase`, user).send({ quantity: 2, colourId: whiteId });
+      const res = await api
+        .mutate('post', `/api/vehicles/${id}/purchase`, user)
+        .send({ quantity: 2, colourId: whiteId });
 
       expect(res.status).toBe(200);
       expect(res.body.vehicle.quantity).toBe(3);
@@ -223,7 +225,10 @@ describe('colour variants', () => {
 
   it('finds vehicles by colour', async () => {
     await camryInRedAndWhite();
-    await add({ ...buildVehicle({ make: 'Honda', model: 'Civic', quantity: 3 }), colour: { name: 'Crystal Black', hex: '#111214' } });
+    await add({
+      ...buildVehicle({ make: 'Honda', model: 'Civic', quantity: 3 }),
+      colour: { name: 'Crystal Black', hex: '#111214' },
+    });
 
     const res = await api.get('/api/vehicles/search?colour=pearl', user);
 

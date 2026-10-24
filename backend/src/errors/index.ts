@@ -90,8 +90,16 @@ export class OutOfStockError extends AppError {
   readonly status = 409;
   readonly code = 'OUT_OF_STOCK';
 
-  constructor(available: number) {
-    super(available === 0 ? 'Vehicle is out of stock' : `Only ${available} left in stock`);
+  /** With a colour name the message is about that colour ("Only 1 left in Supersonic Red"). */
+  constructor(available: number, colour?: string) {
+    const where = colour ?? 'stock';
+    super(
+      available === 0
+        ? colour
+          ? `${colour} is out of stock`
+          : 'Vehicle is out of stock'
+        : `Only ${available} left in ${where}`,
+    );
   }
 }
 

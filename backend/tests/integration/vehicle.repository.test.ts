@@ -49,9 +49,14 @@ describe('PgVehicleRepository', () => {
     });
 
     it('stores the given colour', async () => {
-      const created = await repo.create({ ...buildVehicle({ quantity: 3 }), colour: { name: 'Supersonic Red', hex: '#a3161a' } });
+      const created = await repo.create({
+        ...buildVehicle({ quantity: 3 }),
+        colour: { name: 'Supersonic Red', hex: '#a3161a' },
+      });
 
-      expect(created.colours).toEqual([{ id: expect.any(String), name: 'Supersonic Red', hex: '#a3161a', quantity: 3 }]);
+      expect(created.colours).toEqual([
+        { id: expect.any(String), name: 'Supersonic Red', hex: '#a3161a', quantity: 3 },
+      ]);
     });
 
     it('keeps SKUs unique when two models reduce to the same code', async () => {

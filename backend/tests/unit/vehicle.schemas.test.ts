@@ -98,9 +98,9 @@ describe('createVehicleSchema', () => {
     });
 
     it('rejects unknown colour fields', () => {
-      expect(createVehicleSchema.safeParse({ ...camry, colour: { name: 'Red', hex: '#a3161a', id: 'x' } }).success).toBe(
-        false,
-      );
+      expect(
+        createVehicleSchema.safeParse({ ...camry, colour: { name: 'Red', hex: '#a3161a', id: 'x' } }).success,
+      ).toBe(false);
     });
   });
 });

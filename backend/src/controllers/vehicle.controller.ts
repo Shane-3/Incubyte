@@ -21,8 +21,9 @@ export function createVehicleController(vehicles: VehicleService, forecasts: For
     },
 
     async create(req: Request, res: Response) {
-      const vehicle = await vehicles.create(req.body as CreateVehicleBody);
-      res.status(201).json({ vehicle });
+      const { vehicle, merged } = await vehicles.create(req.body as CreateVehicleBody);
+      // 201 for a new model; 200 when the colour (or its units) joined an existing one.
+      res.status(merged ? 200 : 201).json({ vehicle, merged });
     },
 
     async search(req: Request, res: Response) {
@@ -38,14 +39,14 @@ export function createVehicleController(vehicles: VehicleService, forecasts: For
 
     async purchase(req: Request, res: Response) {
       const { id } = res.locals.params as { id: string };
-      const { quantity } = req.body as PurchaseBody;
-      res.json({ vehicle: await vehicles.purchase(id, req.user!.id, quantity) });
+      const { quantity, colourId } = req.body as PurchaseBody;
+      res.json({ vehicle: await vehicles.purchase(id, req.user!.id, quantity, colourId) });
     },
 
     async restock(req: Request, res: Response) {
       const { id } = res.locals.params as { id: string };
-      const { quantity } = req.body as RestockBody;
-      res.json({ vehicle: await vehicles.restock(id, quantity) });
+      const { quantity, colourId } = req.body as RestockBody;
+      res.json({ vehicle: await vehicles.restock(id, quantity, colourId) });
     },
 
     async watch(req: Request, res: Response) {

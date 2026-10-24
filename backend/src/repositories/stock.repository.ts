@@ -19,7 +19,13 @@ export interface IStockRepository {
   /** Adds delta (negative to sell) to one colour and to the model total. */
   adjustColour(tx: Queryable, vehicleId: string, colourId: string, delta: number): Promise<Vehicle>;
   /** Sets one colour's stock (the model total follows) together with other model fields. */
-  setStock(tx: Queryable, vehicleId: string, colourId: string, quantity: number, fields: VehicleChanges): Promise<Vehicle>;
+  setStock(
+    tx: Queryable,
+    vehicleId: string,
+    colourId: string,
+    quantity: number,
+    fields: VehicleChanges,
+  ): Promise<Vehicle>;
   /** Adds a colour with no stock. */
   addColour(tx: Queryable, vehicleId: string, colour: ColourInput): Promise<Colour>;
   recordPurchase(tx: Queryable, purchase: PurchaseRecord): Promise<void>;

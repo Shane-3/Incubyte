@@ -14,6 +14,6 @@ describe('baseSku', () => {
   });
 
   it('only ever contains capital letters, digits and hyphens', () => {
-    expect(baseSku("Rolls-Royce", "Phantom (VIII) & co.")).toMatch(/^[A-Z0-9]+-[A-Z0-9]+$/);
+    expect(baseSku('Rolls-Royce', 'Phantom (VIII) & co.')).toMatch(/^[A-Z0-9]+-[A-Z0-9]+$/);
   });
 });

@@ -45,16 +45,30 @@ const quantity = z
   .min(0, 'must be 0 or more')
   .max(MAX_QUANTITY, `must be at most ${MAX_QUANTITY}`);
 
-export const createVehicleSchema = z.strictObject({
-  make: name,
-  model: name,
-  category,
-  price,
-  quantity,
-  colour: z.never().optional(),
+// Paint names like "Wind Chill Pearl", "Soul Red Crystal Metallic" or "Grigio Telesto (Mk II)".
+const COLOUR_NAME_PATTERN = /^[\p{L}\p{M}\p{N} .,'&()/+-]+$/u;
+
+const colour = z.strictObject({
+  name: z
+    .string()
+    .trim()
+    .min(1, { message: 'is required', abort: true })
+    .max(40, { message: 'must be at most 40 characters', abort: true })
+    .regex(COLOUR_NAME_PATTERN, 'contains characters that are not allowed'),
+  // Only #rrggbb ever reaches the SVG fill attribute.
+  hex: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'must be a colour like #a3161a')
+    .transform((value) => value.toLowerCase()),
 });
 
-export const updateVehicleSchema = createVehicleSchema
+const modelFields = { make: name, model: name, category, price, quantity };
+
+/** Adding an existing make + model adds the colour (or units of it) to that model. */
+export const createVehicleSchema = z.strictObject({ ...modelFields, colour: colour.optional() });
+
+export const updateVehicleSchema = z
+  .strictObject(modelFields)
   .partial()
   .refine((changes) => Object.keys(changes).length > 0, 'must include at least one field to update');
 
@@ -78,7 +92,7 @@ export const searchQuerySchema = z
     minPrice: optionalQuery(queryPrice),
     maxPrice: optionalQuery(queryPrice),
     stock: optionalQuery(z.enum(STOCK_STATUSES)),
-    colour: optionalQuery(z.never()),
+    colour: optionalQuery(searchText),
     sort: z.enum(SORT_FIELDS).default('make'),
     order: z.enum(['asc', 'desc']).default('asc'),
     limit: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(25),
@@ -94,10 +108,14 @@ export const purchaseSchema = z.strictObject({
     .min(1, 'must be at least 1')
     .max(MAX_PURCHASE_QUANTITY, `must be at most ${MAX_PURCHASE_QUANTITY}`)
     .default(1),
+  /** Optional: without it the sale comes from the best-stocked colour. */
+  colourId: z.uuid('must be a valid id').optional(),
 });
 
 export const restockSchema = z.strictObject({
   quantity: quantity.min(1, 'must be at least 1'),
+  /** Required by the service when the model has several colours. */
+  colourId: z.uuid('must be a valid id').optional(),
 });
 
 /** For endpoints that take no body: anything sent is a client trying to set fields it does not own. */

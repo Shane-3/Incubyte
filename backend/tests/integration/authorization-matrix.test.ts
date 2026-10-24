@@ -51,7 +51,8 @@ const MATRIX: Row[] = [
     endpoint: 'POST /api/vehicles',
     method: 'post',
     path: () => '/api/vehicles',
-    body: buildVehicle(),
+    // A model the fixture doesn't already have; posting an existing one merges (200).
+    body: buildVehicle({ make: 'Honda', model: 'Civic' }),
     expected: { anon: 401, user: 201, admin: 201 },
   },
   {
