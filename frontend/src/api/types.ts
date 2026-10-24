@@ -39,8 +39,13 @@ export interface Vehicle {
 /** Model-level fields an edit may change. */
 export type VehicleInput = Pick<Vehicle, 'make' | 'model' | 'category' | 'price' | 'quantity'>;
 
-/** Adding stock: a new model, or (same make + model) a colour of an existing one. */
-export type NewVehicleInput = VehicleInput & { colour?: ColourInput };
+export type ColourStock = ColourInput & { quantity: number };
+
+/**
+ * Adding stock: a new model, or (same make + model) colours of an existing one. With `colours`, each has its own
+ * units and `quantity` is their total.
+ */
+export type NewVehicleInput = VehicleInput & { colour?: ColourInput; colours?: ColourStock[] };
 
 export interface CreateResult {
   vehicle: Vehicle;

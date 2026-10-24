@@ -110,28 +110,37 @@ describe('restocking a colour (admins)', () => {
   });
 });
 
-describe('adding a colour', () => {
+describe('adding colours', () => {
   async function openAdd(user: ReturnType<typeof renderApp>['user']) {
     await user.click(await screen.findByRole('button', { name: 'Add vehicle' }));
     return screen.getByRole('dialog', { name: 'Add vehicle' });
   }
 
-  it('fills the colour from a paint preset and sends it with the vehicle', async () => {
+  async function fillModel(user: ReturnType<typeof renderApp>['user'], drawer: HTMLElement) {
+    await user.type(within(drawer).getByLabelText('Make'), 'Mazda');
+    await user.type(within(drawer).getByLabelText('Model'), 'MX-5 Miata');
+    await user.selectOptions(within(drawer).getByLabelText('Category'), 'Convertible');
+    await user.type(within(drawer).getByLabelText('Price'), '28985');
+  }
+
+  it('adds a new model in several colours, each with its own units, totalled for you', async () => {
     const api = apiFor(priya, []);
     api.vehicles.create.mockResolvedValue({ vehicle: camry, merged: false });
     const { user } = renderApp({ api });
 
     const drawer = await openAdd(user);
-    await user.type(within(drawer).getByLabelText('Make'), 'Mazda');
-    await user.type(within(drawer).getByLabelText('Model'), 'MX-5 Miata');
-    await user.selectOptions(within(drawer).getByLabelText('Category'), 'Convertible');
-    await user.type(within(drawer).getByLabelText('Price'), '28985');
-    await user.type(within(drawer).getByLabelText('Quantity'), '2');
+    await fillModel(user, drawer);
     await user.click(within(drawer).getByRole('button', { name: 'Red' }));
+    expect(within(drawer).getByLabelText('Colour 1 name')).toHaveValue('Red');
+    await user.clear(within(drawer).getByLabelText('Colour 1 name'));
+    await user.type(within(drawer).getByLabelText('Colour 1 name'), 'Soul Red Crystal Metallic');
+    await user.type(within(drawer).getByLabelText('Colour 1 units'), '2');
+    await user.click(within(drawer).getByRole('button', { name: 'Add colour' }));
+    await user.type(within(drawer).getByLabelText('Colour 2 name'), 'Snowflake White Pearl');
+    await user.type(within(drawer).getByLabelText('Colour 2 units'), '3');
 
-    expect(within(drawer).getByLabelText('Colour name')).toHaveValue('Red');
-    await user.clear(within(drawer).getByLabelText('Colour name'));
-    await user.type(within(drawer).getByLabelText('Colour name'), 'Soul Red Crystal Metallic');
+    expect(within(drawer).queryByLabelText('Quantity')).toBeNull();
+    expect(within(drawer).getByText('5 units in 2 colours')).toBeInTheDocument();
     await user.click(within(drawer).getByRole('button', { name: 'Add vehicle' }));
 
     expect(api.vehicles.create).toHaveBeenCalledWith({
@@ -139,12 +148,58 @@ describe('adding a colour', () => {
       model: 'MX-5 Miata',
       category: 'Convertible',
       price: 28985,
-      quantity: 2,
-      colour: { name: 'Soul Red Crystal Metallic', hex: '#a3161a' },
+      quantity: 5,
+      colours: [
+        { name: 'Soul Red Crystal Metallic', hex: '#a3161a', quantity: 2 },
+        { name: 'Snowflake White Pearl', hex: '#8a8f98', quantity: 3 },
+      ],
     });
   });
 
-  it('recognises an existing model, locks its price and category, and adds the colour to it', async () => {
+  it('removes a colour row and returns to a single total when none are left', async () => {
+    const { user } = renderApp({ api: apiFor(priya, []) });
+
+    const drawer = await openAdd(user);
+    await user.click(within(drawer).getByRole('button', { name: 'Black' }));
+    await user.click(within(drawer).getByRole('button', { name: 'White' }));
+    await user.click(within(drawer).getByRole('button', { name: 'Remove colour 1' }));
+
+    expect(within(drawer).getByLabelText('Colour 1 name')).toHaveValue('White');
+    await user.click(within(drawer).getByRole('button', { name: 'Remove colour 1' }));
+    expect(within(drawer).getByLabelText('Quantity')).toBeInTheDocument();
+  });
+
+  it('checks every colour row before sending', async () => {
+    const api = apiFor(priya, []);
+    const { user } = renderApp({ api });
+
+    const drawer = await openAdd(user);
+    await fillModel(user, drawer);
+    await user.click(within(drawer).getByRole('button', { name: 'Add colour' }));
+    await user.type(within(drawer).getByLabelText('Colour 1 units'), '1.5');
+    await user.click(within(drawer).getByRole('button', { name: 'Red' }));
+    await user.click(within(drawer).getByRole('button', { name: 'Add colour' }));
+    await user.type(within(drawer).getByLabelText('Colour 3 name'), 'red');
+    await user.click(within(drawer).getByRole('button', { name: 'Add vehicle' }));
+
+    expect(within(drawer).getByLabelText('Colour 1 name')).toHaveAccessibleDescription('Enter a colour name');
+    expect(within(drawer).getByLabelText('Colour 1 units')).toHaveAccessibleDescription('Use whole units, 0 or more');
+    expect(within(drawer).getByLabelText('Colour 3 name')).toHaveAccessibleDescription('Already listed above');
+    expect(api.vehicles.create).not.toHaveBeenCalled();
+  });
+
+  it('keeps the paint, name and units of a row on one line', async () => {
+    const { user } = renderApp({ api: apiFor(priya, []) });
+
+    const drawer = await openAdd(user);
+    await user.click(within(drawer).getByRole('button', { name: 'Blue' }));
+
+    const row = within(drawer).getByLabelText('Colour 1 name').closest('[data-colour-row]')!;
+    expect(within(row as HTMLElement).getByLabelText('Colour 1 paint')).toHaveValue('#1f3a5f');
+    expect(within(row as HTMLElement).getByLabelText('Colour 1 units')).toBeInTheDocument();
+  });
+
+  it('recognises an existing model, locks its price and category, and adds the colours to it', async () => {
     const api = apiFor(priya, [camry]);
     api.vehicles.create.mockResolvedValue({ vehicle: camry, merged: true });
     const { user } = renderApp({ api });
@@ -158,12 +213,19 @@ describe('adding a colour', () => {
     expect(within(drawer).getByLabelText('Price')).toHaveValue(28400);
     expect(within(drawer).getByLabelText('Category')).toHaveValue('Sedan');
 
-    await user.type(within(drawer).getByLabelText('Quantity'), '2');
     await user.click(within(drawer).getByRole('button', { name: 'Blue' }));
-    await user.click(within(drawer).getByRole('button', { name: 'Add colour' }));
+    await user.type(within(drawer).getByLabelText('Colour 1 units'), '2');
+    await user.click(within(drawer).getByRole('button', { name: 'Add colours' }));
 
     expect(api.vehicles.create).toHaveBeenCalledWith(
-      expect.objectContaining({ make: 'toyota', model: 'camry', price: 28400, category: 'Sedan', quantity: 2 }),
+      expect.objectContaining({
+        make: 'toyota',
+        model: 'camry',
+        price: 28400,
+        category: 'Sedan',
+        quantity: 2,
+        colours: [{ name: 'Blue', hex: '#1f3a5f', quantity: 2 }],
+      }),
     );
     expect(await screen.findByText('Added 2 × Blue to Toyota Camry')).toBeInTheDocument();
   });
