@@ -4,6 +4,8 @@ import type { Category, ColourInput } from '../types/vehicle';
 
 export interface SeedOptions {
   now: Date;
+  /** Delete the existing lot (vehicles and everything hanging off them) first. Users are kept. */
+  replace?: boolean;
 }
 
 interface DemoVehicle {

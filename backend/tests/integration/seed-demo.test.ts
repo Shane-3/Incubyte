@@ -83,6 +83,20 @@ describe('seedDemoData', () => {
     expect(await count('purchases')).toBe(firstSales);
   });
 
+  it('replaces an existing lot when asked to, keeping user accounts', async () => {
+    await seedDemoData(pool, { now: NOW });
+    await pool.query(
+      `INSERT INTO users (name, email, password_hash, role) VALUES ('Dana Okafor', 'dana@example.com', 'h', 'admin')`,
+    );
+
+    await seedDemoData(pool, { now: NOW, replace: true });
+
+    expect(await count('vehicles')).toBeLessThan(40);
+    expect(await count('vehicles')).toBeGreaterThanOrEqual(28);
+    const { rows } = await pool.query(`SELECT count(*)::int AS n FROM users WHERE email = 'dana@example.com'`);
+    expect(rows[0].n).toBe(1);
+  });
+
   it('refuses to run against a database that already has vehicles', async () => {
     await seedDemoData(pool, { now: NOW });
 
