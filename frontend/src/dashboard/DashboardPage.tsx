@@ -1,5 +1,5 @@
 import { Plus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import type { SortField, Vehicle } from '../api/types';
 import { AppShell } from '../app/AppShell';
 import { useAuth } from '../auth/AuthProvider';
@@ -14,6 +14,48 @@ import { useForecast, useStats, useVehicles } from './queries';
 import { type Filters, toVehicleQuery, useFilters } from './useFilters';
 import { type Panel, VehiclePanels } from './VehiclePanels';
 import { VehicleTable } from './VehicleTable';
+
+const SORT_CHOICES: Array<{ value: `${SortField}:${'asc' | 'desc'}`; label: string }> = [
+  { value: 'make:asc', label: 'Make, A to Z' },
+  { value: 'price:asc', label: 'Price, low to high' },
+  { value: 'price:desc', label: 'Price, high to low' },
+  { value: 'quantity:asc', label: 'Stock, lowest first' },
+  { value: 'createdAt:desc', label: 'Newest first' },
+];
+
+/** Column headers are hidden on small screens, so sorting moves into a select there. */
+function MobileSort({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (sort: SortField, order: 'asc' | 'desc') => void;
+}) {
+  const id = useId();
+  return (
+    <div className="flex items-center gap-2 md:hidden">
+      <label htmlFor={id} className="text-sm text-muted">
+        Sort by
+      </label>
+      <select
+        id={id}
+        value={SORT_CHOICES.some((c) => c.value === value) ? value : ''}
+        onChange={(e) => {
+          const [sort, order] = e.target.value.split(':') as [SortField, 'asc' | 'desc'];
+          onChange(sort, order);
+        }}
+        className="h-8 flex-1 rounded-control border border-border-strong bg-surface px-2 text-base text-text"
+      >
+        {!SORT_CHOICES.some((c) => c.value === value) && <option value="">Custom</option>}
+        {SORT_CHOICES.map((c) => (
+          <option key={c.value} value={c.value}>
+            {c.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
 function emptyMessage(hasFilters: boolean, stock: Filters['stock'], view: Filters['view']): string {
   if (hasFilters) return 'No vehicles match your filters';
@@ -79,6 +121,8 @@ export function DashboardPage() {
         <KpiStrip stats={stats.data} atRisk={atRiskCount} />
 
         <Toolbar filters={filters} hasFilters={hasFilters} onChange={update} onClear={clear} />
+
+        <MobileSort value={`${filters.sort}:${filters.order}`} onChange={(sort, order) => update({ sort, order })} />
 
         {vehicles.isError ? (
           <div

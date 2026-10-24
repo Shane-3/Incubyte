@@ -19,13 +19,10 @@ export function KpiStrip({ stats, atRisk }: { stats?: InventoryStats; atRisk?: n
 
   return (
     <section aria-label="Inventory summary">
-      <dl
-        className={`grid grid-cols-2 gap-px overflow-hidden rounded-panel border border-border bg-border sm:grid-cols-3 ${
-          tiles.length === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'
-        }`}
-      >
+      {/* Flex-wrap with growing tiles, so every row is filled whatever the tile count and width. */}
+      <dl className="flex flex-wrap gap-px overflow-hidden rounded-panel border border-border bg-border">
         {tiles.map((tile) => (
-          <div key={tile.label} className="flex flex-col gap-1 bg-surface px-4 py-3">
+          <div key={tile.label} className="flex min-w-36 flex-[1_1_9rem] flex-col gap-1 bg-surface px-4 py-3">
             <dt className="text-xs text-muted">{tile.label}</dt>
             <dd className="text-xl font-semibold tabular-nums">{tile.value}</dd>
           </div>

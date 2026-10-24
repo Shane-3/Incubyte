@@ -91,6 +91,15 @@ describe('sorting', () => {
     await user.click(screen.getByRole('button', { name: 'Price' }));
     await waitFor(() => expect(lastQuery(api)).toMatchObject({ sort: 'price', order: 'desc' }));
   });
+
+  it('offers a Sort by select for small screens, where column headers are hidden', async () => {
+    const api = apiWith();
+    const { user } = renderApp({ api });
+
+    await user.selectOptions(await screen.findByLabelText('Sort by'), 'Price, high to low');
+
+    await waitFor(() => expect(lastQuery(api)).toMatchObject({ sort: 'price', order: 'desc' }));
+  });
 });
 
 describe('pagination', () => {

@@ -14,7 +14,7 @@ const DOT: Record<StockLevel, string> = { in: 'bg-in-stock', low: 'bg-low', out:
 export function StockPill({ quantity }: { quantity: number }) {
   const level = stockLevel(quantity);
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-px text-xs text-text">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-px text-xs whitespace-nowrap text-text">
       <span aria-hidden="true" className={`size-1.5 rounded-full ${DOT[level]}`} />
       {LABEL[level]}
     </span>
@@ -23,7 +23,7 @@ export function StockPill({ quantity }: { quantity: number }) {
 
 export function AtRiskPill() {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-low/50 px-2 py-px text-xs text-text">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-low/50 px-2 py-px text-xs whitespace-nowrap text-text">
       <span aria-hidden="true" className="size-1.5 rounded-full bg-low" />
       At risk
     </span>

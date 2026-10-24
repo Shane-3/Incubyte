@@ -50,7 +50,7 @@ function SortHeader({
     <th
       scope="col"
       aria-sort={active ? (order === 'asc' ? 'ascending' : 'descending') : 'none'}
-      className={`h-9 px-3 font-medium ${align === 'right' ? 'text-right' : 'text-left'} ${className}`}
+      className={`h-9 bg-surface px-3 font-medium ${align === 'right' ? 'text-right' : 'text-left'} ${className}`}
     >
       <button
         type="button"
@@ -95,20 +95,29 @@ export function VehicleTable({
   const showForecast = forecastById !== undefined;
   const columns = showForecast ? 6 : 5;
 
+  // No overflow clipping on the wrapper: row popovers and menus must be able to extend past the table.
+  // Below md the rows stack (vehicle and price, then stock and actions) instead of scrolling sideways.
   return (
-    <div className="overflow-hidden rounded-panel border border-border bg-surface">
-      <div className="overflow-x-auto">
-        <table aria-label="Vehicles" aria-busy={loading} className="w-full border-collapse text-base">
-          <thead className="sticky top-0 z-10 bg-surface text-xs text-muted">
+    <div className="rounded-panel border border-border bg-surface">
+      <div>
+        <table aria-label="Vehicles" aria-busy={loading} className="w-full border-collapse text-base max-md:block">
+          <thead className="sticky top-12 z-10 bg-surface text-xs text-muted max-md:hidden">
             <tr>
-              <SortHeader label="Vehicle" field="make" sort={sort} order={order} onSort={onSort} />
+              <SortHeader
+                label="Vehicle"
+                field="make"
+                sort={sort}
+                order={order}
+                onSort={onSort}
+                className="rounded-tl-panel"
+              />
               <SortHeader
                 label="Category"
                 field="category"
                 sort={sort}
                 order={order}
                 onSort={onSort}
-                className="max-md:hidden"
+                className="max-lg:hidden"
               />
               <SortHeader label="Price" field="price" sort={sort} order={order} onSort={onSort} align="right" />
               <SortHeader label="Stock" field="quantity" sort={sort} order={order} onSort={onSort} />
@@ -117,25 +126,28 @@ export function VehicleTable({
                   Days left
                 </th>
               )}
-              <th scope="col" className="h-9 px-3 text-right font-medium">
+              <th scope="col" className="h-9 rounded-tr-panel bg-surface px-3 text-right font-medium">
                 <span className="sr-only">Actions</span>
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="max-md:block">
             {loading && vehicles.length === 0 ? (
               <SkeletonRows columns={columns} />
             ) : (
               vehicles.map((v) => {
                 const forecast = forecastById?.get(v.id);
                 return (
-                  <tr key={v.id} className="h-11 border-t border-border transition-colors hover:bg-surface-hover">
+                  <tr
+                    key={v.id}
+                    className="h-11 border-t border-border transition-colors hover:bg-surface-hover max-md:grid max-md:h-auto max-md:grid-cols-[minmax(0,1fr)_auto] max-md:items-center max-md:gap-x-3 max-md:gap-y-2 max-md:py-3 max-md:first:border-t-0"
+                  >
                     <td className="px-3 font-medium text-text">
                       <span className="block max-w-[28ch] truncate">{vehicleName(v)}</span>
                     </td>
-                    <td className="px-3 text-muted max-md:hidden">{v.category}</td>
-                    <td className="px-3 text-right tabular-nums">{formatPrice(v.price)}</td>
-                    <td className="px-3">
+                    <td className="px-3 text-muted max-lg:hidden">{v.category}</td>
+                    <td className="px-3 text-right whitespace-nowrap tabular-nums">{formatPrice(v.price)}</td>
+                    <td className="px-3 whitespace-nowrap">
                       <span className="inline-flex items-center gap-2">
                         <span className="w-8 text-right tabular-nums">{v.quantity}</span>
                         <StockPill quantity={v.quantity} />

@@ -167,7 +167,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      <header className="sticky top-0 z-10 flex h-12 items-center gap-3 border-b border-border bg-page px-4 sm:px-6">
+      <header className="sticky top-0 z-30 flex h-12 items-center gap-3 border-b border-border bg-page px-4 sm:px-6">
         <button
           type="button"
           aria-label="Open navigation"
