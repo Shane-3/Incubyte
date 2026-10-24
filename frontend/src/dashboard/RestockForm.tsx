@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import type { Vehicle } from '../api/types';
-import { FormAlert } from '../auth/AuthLayout';
+import { FormAlert } from '../components/ui/FormAlert';
 import { Button } from '../components/ui/Button';
 import { TextField } from '../components/ui/TextField';
 import { mapApiError } from '../lib/form-errors';

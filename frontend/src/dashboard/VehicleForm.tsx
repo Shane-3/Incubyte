@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import { CATEGORIES, type Category, type Vehicle, type VehicleInput } from '../api/types';
-import { FormAlert } from '../auth/AuthLayout';
+import { FormAlert } from '../components/ui/FormAlert';
 import { Button } from '../components/ui/Button';
 import { SelectField } from '../components/ui/SelectField';
 import { TextField } from '../components/ui/TextField';

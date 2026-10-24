@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router';
 import { Button } from '../components/ui/Button';
 import { TextField } from '../components/ui/TextField';
 import { type FieldErrors, isEmail, mapApiError } from '../lib/form-errors';
-import { AuthLayout, FormAlert } from './AuthLayout';
+import { FormAlert } from '../components/ui/FormAlert';
+import { AuthLayout } from './AuthLayout';
 import { useAuth } from './AuthProvider';
 
 type Field = 'name' | 'email' | 'password';
