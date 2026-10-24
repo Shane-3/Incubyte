@@ -29,11 +29,13 @@ const restock: StockChange = { kind: 'restock', quantity: 1 };
 function vehicle(quantity: number): Vehicle {
   return {
     id: 'camry',
+    sku: 'TOY-CAMRY',
     make: 'Toyota',
     model: 'Camry',
     category: 'Sedan',
     price: 27999,
     quantity,
+    colours: [{ id: 'c-standard', name: 'Standard', hex: '#8a8f98', quantity }],
     createdAt: new Date(),
     updatedAt: new Date(),
   };

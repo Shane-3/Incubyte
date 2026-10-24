@@ -45,7 +45,14 @@ const quantity = z
   .min(0, 'must be 0 or more')
   .max(MAX_QUANTITY, `must be at most ${MAX_QUANTITY}`);
 
-export const createVehicleSchema = z.strictObject({ make: name, model: name, category, price, quantity });
+export const createVehicleSchema = z.strictObject({
+  make: name,
+  model: name,
+  category,
+  price,
+  quantity,
+  colour: z.never().optional(),
+});
 
 export const updateVehicleSchema = createVehicleSchema
   .partial()
@@ -71,6 +78,7 @@ export const searchQuerySchema = z
     minPrice: optionalQuery(queryPrice),
     maxPrice: optionalQuery(queryPrice),
     stock: optionalQuery(z.enum(STOCK_STATUSES)),
+    colour: optionalQuery(z.never()),
     sort: z.enum(SORT_FIELDS).default('make'),
     order: z.enum(['asc', 'desc']).default('asc'),
     limit: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(25),

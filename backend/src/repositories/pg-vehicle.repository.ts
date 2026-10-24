@@ -48,6 +48,8 @@ const UPDATABLE_COLUMNS: Record<keyof VehicleChanges, string> = {
 
 export function toVehicle(row: VehicleRow): Vehicle {
   return {
+    sku: '',
+    colours: [],
     id: row.id,
     make: row.make,
     model: row.model,
@@ -122,6 +124,10 @@ export class PgVehicleRepository implements IVehicleRepository {
       [make, model, category, price, quantity],
     );
     return toVehicle(rows[0]!);
+  }
+
+  async findByMakeModel(_make: string, _model: string): Promise<Vehicle | null> {
+    throw new Error('Not implemented');
   }
 
   async findById(id: string): Promise<Vehicle | null> {

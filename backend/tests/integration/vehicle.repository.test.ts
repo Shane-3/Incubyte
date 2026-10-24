@@ -1,4 +1,5 @@
 import type { Pool } from 'pg';
+import { DuplicateModelError } from '../../src/errors';
 import { PgVehicleRepository } from '../../src/repositories/pg-vehicle.repository';
 import type { ListOptions, VehicleFilters } from '../../src/types/vehicle';
 import { openTestDb, resetDb } from '../helpers/db';
@@ -29,20 +30,50 @@ describe('PgVehicleRepository', () => {
   }
 
   describe('create and find', () => {
-    it('stores a vehicle and returns money as a number', async () => {
+    it('stores a vehicle with a generated SKU, a default colour holding its stock, and money as a number', async () => {
       const created = await repo.create(buildVehicle({ price: 38999.99 }));
 
       expect(created).toEqual({
         id: expect.stringMatching(/^[0-9a-f-]{36}$/),
+        sku: 'TOY-CAMRY',
         make: 'Toyota',
         model: 'Camry',
         category: 'Sedan',
         price: 38999.99,
         quantity: 5,
+        colours: [{ id: expect.stringMatching(/^[0-9a-f-]{36}$/), name: 'Standard', hex: '#8a8f98', quantity: 5 }],
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       });
       expect(await repo.findById(created.id)).toEqual(created);
+    });
+
+    it('stores the given colour', async () => {
+      const created = await repo.create({ ...buildVehicle({ quantity: 3 }), colour: { name: 'Supersonic Red', hex: '#a3161a' } });
+
+      expect(created.colours).toEqual([{ id: expect.any(String), name: 'Supersonic Red', hex: '#a3161a', quantity: 3 }]);
+    });
+
+    it('keeps SKUs unique when two models reduce to the same code', async () => {
+      const first = await repo.create(buildVehicle({ make: 'Mazda', model: 'CX-5' }));
+      const second = await repo.create(buildVehicle({ make: 'Mazda', model: 'CX5' }));
+
+      expect([first.sku, second.sku]).toEqual(['MAZ-CX5', 'MAZ-CX5-2']);
+    });
+
+    it('refuses a second model with the same make and model, ignoring case', async () => {
+      await repo.create(buildVehicle({ make: 'Toyota', model: 'Camry' }));
+
+      await expect(repo.create(buildVehicle({ make: 'toyota', model: 'CAMRY' }))).rejects.toBeInstanceOf(
+        DuplicateModelError,
+      );
+    });
+
+    it('finds a model by make and model, ignoring case', async () => {
+      const created = await repo.create(buildVehicle());
+
+      expect(await repo.findByMakeModel('TOYOTA', 'camry')).toEqual(created);
+      expect(await repo.findByMakeModel('Toyota', 'Corolla')).toBeNull();
     });
 
     it('returns null for an unknown or malformed id', async () => {
@@ -68,6 +99,19 @@ describe('PgVehicleRepository', () => {
         'Toyota RAV4',
       ]);
       expect(await names({ model: 'CIV' })).toEqual(['Honda Civic']);
+    });
+
+    it('filters by colour name, partially and case-insensitively, and returns colours with each result', async () => {
+      await repo.create({
+        ...buildVehicle({ make: 'Mazda', model: 'MX-5', category: 'Convertible' }),
+        colour: { name: 'Soul Red Crystal', hex: '#9b1b1e' },
+      });
+
+      const page = await repo.search({ colour: 'RED' }, defaults);
+
+      expect(page.data.map((v) => `${v.make} ${v.model}`)).toEqual(['Mazda MX-5']);
+      expect(page.data[0]!.colours.map((c) => c.name)).toEqual(['Soul Red Crystal']);
+      expect(page.data[0]!.sku).toBe('MAZ-MX5');
     });
 
     it('matches category exactly', async () => {
@@ -174,6 +218,14 @@ describe('PgVehicleRepository', () => {
       expect(updated!.createdAt).toEqual(created.createdAt);
     });
 
+    it('keeps the SKU when the model is renamed, so codes stay stable', async () => {
+      const created = await repo.create(buildVehicle());
+
+      const updated = await repo.update(created.id, { model: 'Camry Hybrid' });
+
+      expect(updated!.sku).toBe('TOY-CAMRY');
+    });
+
     it('returns null when updating an unknown vehicle', async () => {
       expect(await repo.update('00000000-0000-4000-8000-000000000000', { price: 1 })).toBeNull();
     });
@@ -191,14 +243,46 @@ describe('PgVehicleRepository', () => {
     it.each([
       [
         'negative stock',
-        `INSERT INTO vehicles (make, model, category, price, quantity) VALUES ('A', 'B', 'Sedan', 1, -1)`,
+        `INSERT INTO vehicles (sku, make, model, category, price, quantity) VALUES ('A-B', 'A', 'B', 'Sedan', 1, -1)`,
       ],
       [
         'negative price',
-        `INSERT INTO vehicles (make, model, category, price, quantity) VALUES ('A', 'B', 'Sedan', -1, 1)`,
+        `INSERT INTO vehicles (sku, make, model, category, price, quantity) VALUES ('A-B', 'A', 'B', 'Sedan', -1, 1)`,
       ],
     ])('rejects %s', async (_, sql) => {
       await expect(pool.query(sql)).rejects.toThrow(/check constraint/);
+    });
+
+    describe('colours', () => {
+      const insertColour = (vehicleId: string, name: string, hex: string, quantity: number) =>
+        pool.query('INSERT INTO vehicle_colours (vehicle_id, name, hex, quantity) VALUES ($1, $2, $3, $4)', [
+          vehicleId,
+          name,
+          hex,
+          quantity,
+        ]);
+
+      it('rejects negative colour stock and malformed hex values', async () => {
+        const created = await repo.create(buildVehicle());
+
+        await expect(insertColour(created.id, 'Red', '#a3161a', -1)).rejects.toThrow(/check constraint/);
+        await expect(insertColour(created.id, 'Red', 'red', 1)).rejects.toThrow(/check constraint/);
+      });
+
+      it('allows each colour name once per model, ignoring case', async () => {
+        const created = await repo.create(buildVehicle());
+
+        await expect(insertColour(created.id, 'STANDARD', '#000000', 1)).rejects.toThrow(/duplicate key/);
+      });
+
+      it('removes colours with their vehicle', async () => {
+        const created = await repo.create(buildVehicle());
+
+        await repo.delete(created.id);
+
+        const { rows } = await pool.query('SELECT count(*)::int AS n FROM vehicle_colours');
+        expect(rows[0].n).toBe(0);
+      });
     });
 
     it('refuses to decrement stock below zero', async () => {

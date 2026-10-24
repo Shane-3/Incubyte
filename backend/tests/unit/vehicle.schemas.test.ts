@@ -1,5 +1,7 @@
 import {
   createVehicleSchema,
+  purchaseSchema,
+  restockSchema,
   searchQuerySchema,
   updateVehicleSchema,
   vehicleIdSchema,
@@ -67,9 +69,54 @@ describe('createVehicleSchema', () => {
     expect(failedFields(createVehicleSchema.safeParse({}))).toEqual(['make', 'model', 'category', 'price', 'quantity']);
   });
 
-  it('rejects client-controlled fields such as id and timestamps', () => {
+  it('rejects client-controlled fields such as id, sku and timestamps', () => {
     expect(createVehicleSchema.safeParse({ ...camry, id: 'x' }).success).toBe(false);
+    expect(createVehicleSchema.safeParse({ ...camry, sku: 'MINE-1' }).success).toBe(false);
     expect(createVehicleSchema.safeParse({ ...camry, createdAt: '2020-01-01' }).success).toBe(false);
+  });
+
+  describe('colour', () => {
+    it('is optional', () => {
+      expect(createVehicleSchema.parse(camry)).not.toHaveProperty('colour');
+    });
+
+    it('accepts a paint name and a hex value, trimmed and lower-cased', () => {
+      const parsed = createVehicleSchema.parse({ ...camry, colour: { name: ' Supersonic Red ', hex: '#A3161A' } });
+
+      expect(parsed.colour).toEqual({ name: 'Supersonic Red', hex: '#a3161a' });
+    });
+
+    it.each([
+      [{ name: '', hex: '#a3161a' }, 'colour.name'],
+      [{ name: '<b>Red</b>', hex: '#a3161a' }, 'colour.name'],
+      [{ name: 'x'.repeat(41), hex: '#a3161a' }, 'colour.name'],
+      [{ name: 'Red', hex: 'red' }, 'colour.hex'],
+      [{ name: 'Red', hex: '#a3161' }, 'colour.hex'],
+      [{ name: 'Red', hex: 'url(javascript:alert(1))' }, 'colour.hex'],
+    ])('rejects %j', (colour, field) => {
+      expect(failedFields(createVehicleSchema.safeParse({ ...camry, colour }))).toEqual([field]);
+    });
+
+    it('rejects unknown colour fields', () => {
+      expect(createVehicleSchema.safeParse({ ...camry, colour: { name: 'Red', hex: '#a3161a', id: 'x' } }).success).toBe(
+        false,
+      );
+    });
+  });
+});
+
+describe('purchaseSchema and restockSchema', () => {
+  const colourId = '3f2c1d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f';
+
+  it('accept an optional colour id', () => {
+    expect(purchaseSchema.parse({ quantity: 1, colourId })).toEqual({ quantity: 1, colourId });
+    expect(purchaseSchema.parse({})).toEqual({ quantity: 1 });
+    expect(restockSchema.parse({ quantity: 4, colourId })).toEqual({ quantity: 4, colourId });
+  });
+
+  it('reject a malformed colour id', () => {
+    expect(failedFields(purchaseSchema.safeParse({ colourId: 'red' }))).toEqual(['colourId']);
+    expect(failedFields(restockSchema.safeParse({ quantity: 1, colourId: "1' OR '1'='1" }))).toEqual(['colourId']);
   });
 });
 
@@ -88,6 +135,11 @@ describe('updateVehicleSchema', () => {
 
   it('rejects unknown fields', () => {
     expect(updateVehicleSchema.safeParse({ price: 1, id: 'x' }).success).toBe(false);
+  });
+
+  it('does not change colours or the SKU', () => {
+    expect(updateVehicleSchema.safeParse({ colour: { name: 'Red', hex: '#a3161a' } }).success).toBe(false);
+    expect(updateVehicleSchema.safeParse({ sku: 'NEW-SKU' }).success).toBe(false);
   });
 });
 
@@ -138,6 +190,10 @@ describe('searchQuerySchema', () => {
     ['stock', { stock: 'some' }],
   ])('rejects an invalid %s', (field, query) => {
     expect(failedFields(searchQuerySchema.safeParse(query))).toEqual([field]);
+  });
+
+  it('accepts a colour text filter', () => {
+    expect(searchQuerySchema.parse({ colour: ' red ' }).colour).toBe('red');
   });
 
   it.each(['in', 'low', 'out'])('accepts the stock status %s', (stock) => {

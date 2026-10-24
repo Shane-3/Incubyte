@@ -12,6 +12,8 @@ import type {
 export interface IVehicleRepository {
   create(input: NewVehicle): Promise<Vehicle>;
   findById(id: string): Promise<Vehicle | null>;
+  /** Case-insensitive; make + model identifies a model. */
+  findByMakeModel(make: string, model: string): Promise<Vehicle | null>;
   /** isWatching is computed for viewerId (false for everything when omitted). */
   search(filters: VehicleFilters, options: ListOptions, viewerId?: string): Promise<Page<VehicleView>>;
   /** Returns null when the vehicle does not exist. */

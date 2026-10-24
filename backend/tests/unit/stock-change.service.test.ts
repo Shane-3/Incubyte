@@ -1,9 +1,9 @@
-import { OutOfStockError, VehicleNotFoundError } from '../../src/errors';
 import type { ITransactionRunner, Queryable } from '../../src/db/transaction';
+import { OutOfStockError, ValidationError, VehicleNotFoundError } from '../../src/errors';
 import type { IStockRepository, PurchaseRecord } from '../../src/repositories/stock.repository';
 import { StockChangeService } from '../../src/services/stock-change.service';
 import type { IStockChangeHandler, StockChangeEvent } from '../../src/types/stock';
-import type { Vehicle, VehicleChanges } from '../../src/types/vehicle';
+import type { Colour, Vehicle, VehicleChanges } from '../../src/types/vehicle';
 
 const TX = { query: vi.fn() } as unknown as Queryable;
 
@@ -24,41 +24,53 @@ class FakeTransactionRunner implements ITransactionRunner {
   }
 }
 
+/** In-memory model of the Postgres stock repository: colours hold stock, the model total follows. */
 class FakeStockRepository implements IStockRepository {
   readonly purchases: PurchaseRecord[] = [];
   readonly txSeen: Queryable[] = [];
+  readonly locked: string[] = [];
 
   constructor(private readonly vehicles: Map<string, Vehicle>) {}
 
-  async decrement(tx: Queryable, id: string, quantity: number) {
-    this.txSeen.push(tx);
-    const v = this.vehicles.get(id);
-    if (!v || v.quantity < quantity) return null;
-    v.quantity -= quantity;
-    return { ...v };
+  private snapshot(v: Vehicle): Vehicle {
+    return { ...v, colours: v.colours.map((c) => ({ ...c })) };
   }
 
-  async increment(tx: Queryable, id: string, quantity: number) {
-    this.txSeen.push(tx);
-    const v = this.vehicles.get(id);
-    if (!v) return null;
-    v.quantity += quantity;
-    return { ...v };
+  private recount(v: Vehicle) {
+    v.quantity = v.colours.reduce((sum, c) => sum + c.quantity, 0);
   }
 
-  async set(tx: Queryable, id: string, quantity: number, fields: VehicleChanges) {
+  async lockVehicle(tx: Queryable, id: string) {
     this.txSeen.push(tx);
+    this.locked.push(id);
     const v = this.vehicles.get(id);
-    if (!v) return null;
-    const before = v.quantity;
-    Object.assign(v, fields, { quantity });
-    return { vehicle: { ...v }, before };
+    return v ? this.snapshot(v) : null;
   }
 
-  async findById(tx: Queryable, id: string) {
+  async adjustColour(tx: Queryable, vehicleId: string, colourId: string, delta: number) {
     this.txSeen.push(tx);
-    const v = this.vehicles.get(id);
-    return v ? { ...v } : null;
+    const v = this.vehicles.get(vehicleId)!;
+    const colour = v.colours.find((c) => c.id === colourId)!;
+    colour.quantity += delta;
+    if (colour.quantity < 0) throw new Error('check constraint violated');
+    this.recount(v);
+    return this.snapshot(v);
+  }
+
+  async setStock(tx: Queryable, vehicleId: string, colourId: string, quantity: number, fields: VehicleChanges) {
+    this.txSeen.push(tx);
+    const v = this.vehicles.get(vehicleId)!;
+    Object.assign(v, fields);
+    v.colours.find((c) => c.id === colourId)!.quantity = quantity;
+    this.recount(v);
+    return this.snapshot(v);
+  }
+
+  async addColour(tx: Queryable, vehicleId: string, colour: { name: string; hex: string }) {
+    this.txSeen.push(tx);
+    const created: Colour = { id: `c-${colour.name.toLowerCase()}`, ...colour, quantity: 0 };
+    this.vehicles.get(vehicleId)!.colours.push(created);
+    return { ...created };
   }
 
   async recordPurchase(tx: Queryable, purchase: PurchaseRecord) {
@@ -75,14 +87,20 @@ class RecordingHandler implements IStockChangeHandler {
   }
 }
 
-function setup(quantity = 5) {
+const RED = 'c-red';
+const WHITE = 'c-white';
+
+/** Camry in one colour (Standard) by default, or several when given. */
+function setup(colours: Array<[string, string, number]> = [['c-standard', 'Standard', 5]]) {
   const camry: Vehicle = {
     id: 'camry',
+    sku: 'TOY-CAMRY',
     make: 'Toyota',
     model: 'Camry',
     category: 'Sedan',
     price: 27999.99,
-    quantity,
+    quantity: colours.reduce((sum, [, , q]) => sum + q, 0),
+    colours: colours.map(([id, name, quantity]) => ({ id, name, hex: '#112233', quantity })),
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -93,29 +111,52 @@ function setup(quantity = 5) {
   return { runner, stock, handler, service };
 }
 
+const twoColours = (): Array<[string, string, number]> => [
+  [RED, 'Supersonic Red', 1],
+  [WHITE, 'Wind Chill Pearl', 4],
+];
+
 describe('StockChangeService', () => {
   describe('purchase', () => {
-    it('decrements stock and records the purchase at the current price', async () => {
-      const { stock, service } = setup(5);
+    it('takes stock from the colour, records the sale with its colour and price', async () => {
+      const { stock, service } = setup(twoColours());
 
-      const vehicle = await service.apply('camry', { kind: 'purchase', quantity: 2, userId: 'priya' });
+      const vehicle = await service.apply('camry', { kind: 'purchase', quantity: 2, userId: 'priya', colourId: WHITE });
 
       expect(vehicle.quantity).toBe(3);
-      expect(stock.purchases).toEqual([{ vehicleId: 'camry', userId: 'priya', quantity: 2, unitPrice: 27999.99 }]);
+      expect(vehicle.colours.find((c) => c.id === WHITE)!.quantity).toBe(2);
+      expect(stock.purchases).toEqual([
+        { vehicleId: 'camry', colourId: WHITE, userId: 'priya', quantity: 2, unitPrice: 27999.99 },
+      ]);
     });
 
-    it('tells every handler the before and after quantities', async () => {
-      const { handler, service } = setup(5);
+    it('takes from the best-stocked colour when none is chosen', async () => {
+      const { stock, service } = setup(twoColours());
 
-      await service.apply('camry', { kind: 'purchase', quantity: 2, userId: 'priya' });
+      await service.apply('camry', { kind: 'purchase', quantity: 1, userId: 'priya' });
+
+      expect(stock.purchases[0]!.colourId).toBe(WHITE);
+    });
+
+    it('locks the model before reading its stock', async () => {
+      const { stock, service } = setup();
+
+      await service.apply('camry', { kind: 'purchase', quantity: 1, userId: 'priya' });
+
+      expect(stock.locked).toEqual(['camry']);
+    });
+
+    it('tells every handler the model total before and after', async () => {
+      const { handler, service } = setup(twoColours());
+
+      await service.apply('camry', { kind: 'purchase', quantity: 1, userId: 'priya', colourId: RED });
 
       expect(handler.events).toHaveLength(1);
-      expect(handler.events[0]!.event).toMatchObject({ before: 5, after: 3, change: { kind: 'purchase' } });
-      expect(handler.events[0]!.event.vehicle.quantity).toBe(3);
+      expect(handler.events[0]!.event).toMatchObject({ before: 5, after: 4, change: { kind: 'purchase' } });
     });
 
     it('does all of it in one transaction', async () => {
-      const { runner, stock, handler, service } = setup(5);
+      const { runner, stock, handler, service } = setup();
 
       await service.apply('camry', { kind: 'purchase', quantity: 1, userId: 'priya' });
 
@@ -123,8 +164,8 @@ describe('StockChangeService', () => {
       expect(new Set([...stock.txSeen, ...handler.events.map((e) => e.tx)])).toEqual(new Set([TX]));
     });
 
-    it('rejects a purchase of an out-of-stock vehicle with OutOfStockError', async () => {
-      const { stock, handler, service } = setup(0);
+    it('rejects a purchase of a sold-out vehicle', async () => {
+      const { stock, handler, service } = setup([['c-standard', 'Standard', 0]]);
 
       const err = await service.apply('camry', { kind: 'purchase', quantity: 1, userId: 'priya' }).catch((e) => e);
 
@@ -134,8 +175,8 @@ describe('StockChangeService', () => {
       expect(handler.events).toEqual([]);
     });
 
-    it('rejects buying more than is left, saying how many remain', async () => {
-      const { service } = setup(2);
+    it('says how many remain when buying more than is left', async () => {
+      const { service } = setup([['c-standard', 'Standard', 2]]);
 
       const err = await service.apply('camry', { kind: 'purchase', quantity: 3, userId: 'priya' }).catch((e) => e);
 
@@ -143,7 +184,29 @@ describe('StockChangeService', () => {
       expect(err.message).toBe('Only 2 left in stock');
     });
 
-    it('rejects an unknown vehicle with VehicleNotFoundError', async () => {
+    it('names the colour when a chosen colour is short', async () => {
+      const { service } = setup(twoColours());
+
+      const short = await service
+        .apply('camry', { kind: 'purchase', quantity: 2, userId: 'priya', colourId: RED })
+        .catch((e) => e);
+
+      expect(short).toBeInstanceOf(OutOfStockError);
+      expect(short.message).toBe('Only 1 left in Supersonic Red');
+    });
+
+    it('rejects a colour that does not belong to the vehicle', async () => {
+      const { service } = setup(twoColours());
+
+      const err = await service
+        .apply('camry', { kind: 'purchase', quantity: 1, userId: 'priya', colourId: 'c-other' })
+        .catch((e) => e);
+
+      expect(err).toBeInstanceOf(ValidationError);
+      expect(err.details).toEqual([{ field: 'colourId', message: 'is not a colour of this vehicle' }]);
+    });
+
+    it('rejects an unknown vehicle', async () => {
       const { service } = setup();
 
       await expect(service.apply('ghost', { kind: 'purchase', quantity: 1, userId: 'priya' })).rejects.toBeInstanceOf(
@@ -153,14 +216,32 @@ describe('StockChangeService', () => {
   });
 
   describe('restock', () => {
-    it('increments stock and notifies handlers without recording a purchase', async () => {
-      const { stock, handler, service } = setup(0);
+    it('adds stock to the only colour without being told which', async () => {
+      const { stock, handler, service } = setup([['c-standard', 'Standard', 0]]);
 
       const vehicle = await service.apply('camry', { kind: 'restock', quantity: 10 });
 
       expect(vehicle.quantity).toBe(10);
       expect(stock.purchases).toEqual([]);
       expect(handler.events[0]!.event).toMatchObject({ before: 0, after: 10 });
+    });
+
+    it('adds stock to the chosen colour', async () => {
+      const { service } = setup(twoColours());
+
+      const vehicle = await service.apply('camry', { kind: 'restock', quantity: 3, colourId: RED });
+
+      expect(vehicle.colours.find((c) => c.id === RED)!.quantity).toBe(4);
+      expect(vehicle.quantity).toBe(8);
+    });
+
+    it('requires a colour when the model has several', async () => {
+      const { service } = setup(twoColours());
+
+      const err = await service.apply('camry', { kind: 'restock', quantity: 3 }).catch((e) => e);
+
+      expect(err).toBeInstanceOf(ValidationError);
+      expect(err.details).toEqual([{ field: 'colourId', message: 'is required when the model has several colours' }]);
     });
 
     it('rejects an unknown vehicle', async () => {
@@ -172,8 +253,70 @@ describe('StockChangeService', () => {
     });
   });
 
+  describe('receive (adding a colour, or units of it, to an existing model)', () => {
+    it('adds a new colour with its units', async () => {
+      const { handler, service } = setup([['c-standard', 'Standard', 0]]);
+
+      const vehicle = await service.apply('camry', {
+        kind: 'receive',
+        quantity: 3,
+        colour: { name: 'Supersonic Red', hex: '#a3161a' },
+      });
+
+      expect(vehicle.colours.map((c) => [c.name, c.quantity])).toEqual([
+        ['Standard', 0],
+        ['Supersonic Red', 3],
+      ]);
+      expect(handler.events[0]!.event).toMatchObject({ before: 0, after: 3 });
+    });
+
+    it('adds units to a colour that already exists, matching its name case-insensitively', async () => {
+      const { service } = setup(twoColours());
+
+      const vehicle = await service.apply('camry', {
+        kind: 'receive',
+        quantity: 2,
+        colour: { name: 'supersonic red', hex: '#a3161a' },
+      });
+
+      expect(vehicle.colours).toHaveLength(2);
+      expect(vehicle.colours.find((c) => c.id === RED)!.quantity).toBe(3);
+    });
+  });
+
+  describe('set (edits that change quantity)', () => {
+    it('sets the stock of a single-colour model with the other edited fields', async () => {
+      const { stock, handler, service } = setup([['c-standard', 'Standard', 0]]);
+
+      const vehicle = await service.apply('camry', { kind: 'set', quantity: 7, fields: { price: 25999 } });
+
+      expect(vehicle).toMatchObject({ quantity: 7, price: 25999 });
+      expect(stock.purchases).toEqual([]);
+      expect(handler.events[0]!.event).toMatchObject({ before: 0, after: 7, change: { kind: 'set' } });
+    });
+
+    it('refuses a single total for a model with several colours', async () => {
+      const { service } = setup(twoColours());
+
+      const err = await service.apply('camry', { kind: 'set', quantity: 7, fields: {} }).catch((e) => e);
+
+      expect(err).toBeInstanceOf(ValidationError);
+      expect(err.details).toEqual([
+        { field: 'quantity', message: 'must be changed per colour for a model with several colours' },
+      ]);
+    });
+
+    it('rejects an unknown vehicle', async () => {
+      const { service } = setup();
+
+      await expect(service.apply('ghost', { kind: 'set', quantity: 1, fields: {} })).rejects.toBeInstanceOf(
+        VehicleNotFoundError,
+      );
+    });
+  });
+
   it('rolls the whole change back when a handler fails', async () => {
-    const { runner, stock } = setup(5);
+    const { runner, stock } = setup();
     const failing = new StockChangeService(runner, stock, [
       { handle: async () => Promise.reject(new Error('alert insert failed')) },
     ]);
@@ -183,25 +326,5 @@ describe('StockChangeService', () => {
     );
     expect(runner.rolledBack).toBe(1);
     expect(runner.committed).toBe(0);
-  });
-});
-
-describe('StockChangeService set (edits that change quantity)', () => {
-  it('sets the quantity with the other edited fields and reports before and after', async () => {
-    const { stock, handler, service } = setup(0);
-
-    const vehicle = await service.apply('camry', { kind: 'set', quantity: 7, fields: { price: 25999 } });
-
-    expect(vehicle).toMatchObject({ quantity: 7, price: 25999 });
-    expect(stock.purchases).toEqual([]);
-    expect(handler.events[0]!.event).toMatchObject({ before: 0, after: 7, change: { kind: 'set' } });
-  });
-
-  it('rejects an unknown vehicle', async () => {
-    const { service } = setup();
-
-    await expect(service.apply('ghost', { kind: 'set', quantity: 1, fields: {} })).rejects.toBeInstanceOf(
-      VehicleNotFoundError,
-    );
   });
 });

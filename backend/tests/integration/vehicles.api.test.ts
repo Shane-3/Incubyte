@@ -33,15 +33,20 @@ describe('vehicles API', () => {
       const res = await api.mutate('post', '/api/vehicles', user).send({ ...buildVehicle(), category: 'suv' });
 
       expect(res.status).toBe(201);
-      expect(res.body.vehicle).toEqual({
-        id: expect.any(String),
-        make: 'Toyota',
-        model: 'Camry',
-        category: 'SUV',
-        price: 27999,
-        quantity: 5,
-        createdAt: expect.any(String),
-        updatedAt: expect.any(String),
+      expect(res.body).toEqual({
+        merged: false,
+        vehicle: {
+          id: expect.any(String),
+          sku: 'TOY-CAMRY',
+          make: 'Toyota',
+          model: 'Camry',
+          category: 'SUV',
+          price: 27999,
+          quantity: 5,
+          colours: [{ id: expect.any(String), name: 'Standard', hex: '#8a8f98', quantity: 5 }],
+          createdAt: expect.any(String),
+          updatedAt: expect.any(String),
+        },
       });
       expect(await api.vehicles.findById(res.body.vehicle.id)).not.toBeNull();
     });

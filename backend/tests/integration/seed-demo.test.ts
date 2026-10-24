@@ -51,6 +51,24 @@ describe('seedDemoData', () => {
     expect(forecasts.some((f) => f.daysOfStockLeft === null)).toBe(true);
   });
 
+  it('paints the lot in real factory colours, with stock split across them and every sale tied to a colour', async () => {
+    await seedDemoData(pool, { now: NOW });
+
+    const { rows: perModel } = await pool.query(
+      `SELECT v.quantity, count(c.id)::int AS colours, COALESCE(sum(c.quantity), 0)::int AS colour_units
+       FROM vehicles v LEFT JOIN vehicle_colours c ON c.vehicle_id = v.id GROUP BY v.id`,
+    );
+    expect(perModel.every((v) => v.colours >= 1)).toBe(true);
+    expect(perModel.filter((v) => v.colours >= 3).length).toBeGreaterThanOrEqual(10);
+    expect(perModel.every((v) => v.quantity === v.colour_units)).toBe(true);
+
+    const { rows: untagged } = await pool.query('SELECT count(*)::int AS n FROM purchases WHERE colour_id IS NULL');
+    expect(untagged[0].n).toBe(0);
+
+    const { rows: names } = await pool.query(`SELECT count(*)::int AS n FROM vehicle_colours WHERE name = 'Standard'`);
+    expect(names[0].n).toBe(0);
+  });
+
   it('is deterministic', async () => {
     await seedDemoData(pool, { now: NOW });
     const first = await pool.query('SELECT make, model, quantity FROM vehicles ORDER BY make, model');

@@ -112,3 +112,20 @@ export class WatchLimitReachedError extends AppError {
     super(`You can watch at most ${limit} vehicles`);
   }
 }
+
+/** Raised by the repository when make + model already exists (the merge path takes over). */
+export class DuplicateModelError extends Error {
+  constructor() {
+    super('A model with this make and model already exists');
+    this.name = 'DuplicateModelError';
+  }
+}
+
+export class ModelExistsError extends AppError {
+  readonly status = 409;
+  readonly code = 'MODEL_EXISTS';
+
+  constructor(name: string, details: ErrorDetail[]) {
+    super(`${name} is already listed. Edit the model to change its price or category.`, details);
+  }
+}

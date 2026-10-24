@@ -1,13 +1,31 @@
 export const CATEGORIES = ['Sedan', 'SUV', 'Hatchback', 'Truck', 'Coupe', 'Convertible', 'Van', 'Electric'] as const;
 export type Category = (typeof CATEGORIES)[number];
 
+/** A paint option of a model. Stock is held per colour; colours share the model's SKU and price. */
+export interface Colour {
+  id: string;
+  name: string;
+  /** #rrggbb, lower case. */
+  hex: string;
+  quantity: number;
+}
+
+export type ColourInput = Pick<Colour, 'name' | 'hex'>;
+
+/** The colour a model gets when none is given, so the original single-stock API keeps working. */
+export const DEFAULT_COLOUR: ColourInput = { name: 'Standard', hex: '#8a8f98' };
+
 export interface Vehicle {
   id: string;
+  /** Generated from make and model at creation and never changed. */
+  sku: string;
   make: string;
   model: string;
   category: Category;
   price: number;
+  /** The model total: always the sum of its colours' stock. */
   quantity: number;
+  colours: Colour[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -15,8 +33,11 @@ export interface Vehicle {
 /** A vehicle as one signed-in user sees it in lists. */
 export type VehicleView = Vehicle & { isWatching: boolean };
 
-export type NewVehicle = Pick<Vehicle, 'make' | 'model' | 'category' | 'price' | 'quantity'>;
-export type VehicleChanges = Partial<NewVehicle>;
+export type NewVehicle = Pick<Vehicle, 'make' | 'model' | 'category' | 'price' | 'quantity'> & {
+  colour?: ColourInput;
+};
+/** Model-level fields an edit may change. Colours and the SKU are not edited this way. */
+export type VehicleChanges = Partial<Pick<Vehicle, 'make' | 'model' | 'category' | 'price' | 'quantity'>>;
 
 export interface VehicleFilters {
   make?: string;
@@ -25,6 +46,8 @@ export interface VehicleFilters {
   minPrice?: number;
   maxPrice?: number;
   stock?: StockStatus;
+  /** Partial colour-name match. */
+  colour?: string;
 }
 
 export const STOCK_STATUSES = ['in', 'low', 'out'] as const;
