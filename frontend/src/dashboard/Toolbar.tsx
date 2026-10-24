@@ -5,7 +5,7 @@ import { Button } from '../components/ui/Button';
 import { formatPrice } from '../lib/format';
 import type { Filters } from './useFilters';
 
-type TextKey = 'make' | 'model' | 'minPrice' | 'maxPrice';
+type TextKey = 'make' | 'model' | 'colour' | 'minPrice' | 'maxPrice';
 
 const DEBOUNCE_MS = 300;
 
@@ -42,6 +42,7 @@ const inputClass =
 export function Toolbar({ filters, hasFilters, onChange, onClear }: ToolbarProps) {
   const [draft, setDraft] = useState<Record<TextKey, string>>({
     make: filters.make,
+    colour: filters.colour,
     model: filters.model,
     minPrice: filters.minPrice,
     maxPrice: filters.maxPrice,
@@ -50,8 +51,14 @@ export function Toolbar({ filters, hasFilters, onChange, onClear }: ToolbarProps
 
   // Follow the URL when it changes from elsewhere (Clear, chips, sidebar).
   useEffect(() => {
-    setDraft({ make: filters.make, model: filters.model, minPrice: filters.minPrice, maxPrice: filters.maxPrice });
-  }, [filters.make, filters.model, filters.minPrice, filters.maxPrice]);
+    setDraft({
+      make: filters.make,
+      model: filters.model,
+      colour: filters.colour,
+      minPrice: filters.minPrice,
+      maxPrice: filters.maxPrice,
+    });
+  }, [filters.make, filters.model, filters.colour, filters.minPrice, filters.maxPrice]);
 
   const min = draft.minPrice === '' ? undefined : Number(draft.minPrice);
   const max = draft.maxPrice === '' ? undefined : Number(draft.maxPrice);
@@ -61,6 +68,7 @@ export function Toolbar({ filters, hasFilters, onChange, onClear }: ToolbarProps
   useEffect(() => {
     const changes: Partial<Record<TextKey, string>> = {};
     if (draft.make !== filters.make) changes.make = draft.make;
+    if (draft.colour !== filters.colour) changes.colour = draft.colour;
     if (draft.model !== filters.model) changes.model = draft.model;
     if (!rangeInvalid) {
       if (draft.minPrice !== filters.minPrice) changes.minPrice = draft.minPrice;
@@ -76,6 +84,7 @@ export function Toolbar({ filters, hasFilters, onChange, onClear }: ToolbarProps
 
   const chips: Array<{ label: string; key: keyof Filters }> = [];
   if (filters.make) chips.push({ label: `Make: ${filters.make}`, key: 'make' });
+  if (filters.colour) chips.push({ label: `Colour: ${filters.colour}`, key: 'colour' });
   if (filters.model) chips.push({ label: `Model: ${filters.model}`, key: 'model' });
   if (filters.category) chips.push({ label: `Category: ${filters.category}`, key: 'category' });
   if (filters.minPrice) chips.push({ label: `Min price: ${formatPrice(Number(filters.minPrice))}`, key: 'minPrice' });
@@ -91,7 +100,7 @@ export function Toolbar({ filters, hasFilters, onChange, onClear }: ToolbarProps
       </div>
 
       <div
-        className={`${open ? 'grid' : 'max-md:hidden md:grid'} grid-cols-2 gap-3 md:grid-cols-[1fr_1fr_160px_120px_120px_auto] md:items-end`}
+        className={`${open ? 'grid' : 'max-md:hidden md:grid'} grid-cols-2 gap-3 md:grid-cols-[1fr_1fr_1fr_150px_110px_110px_auto] md:items-end`}
       >
         <Field label="Make">
           {(id) => (
@@ -103,7 +112,18 @@ export function Toolbar({ filters, hasFilters, onChange, onClear }: ToolbarProps
             <input id={id} className={inputClass} value={draft.model} onChange={set('model')} placeholder="Any model" />
           )}
         </Field>
-        <Field label="Category" className="col-span-2 md:col-span-1">
+        <Field label="Colour">
+          {(id) => (
+            <input
+              id={id}
+              className={inputClass}
+              value={draft.colour}
+              onChange={set('colour')}
+              placeholder="Any colour"
+            />
+          )}
+        </Field>
+        <Field label="Category">
           {(id) => (
             <select
               id={id}

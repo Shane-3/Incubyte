@@ -1,6 +1,7 @@
 import { Bell, BellRing, Minus, PackagePlus, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Vehicle } from '../api/types';
+import { bestStocked, ColourPicker } from '../components/ColourSwatches';
 import { Button } from '../components/ui/Button';
 import { Popover } from '../components/ui/Popover';
 import { useToast } from '../components/ui/Toast';
@@ -13,18 +14,28 @@ const MAX_PER_PURCHASE = 10;
 function PurchaseControl({ vehicle }: { vehicle: Vehicle }) {
   const [open, setOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [colourId, setColourId] = useState('');
   const purchase = usePurchase();
   const toast = useToast();
   const name = vehicleName(vehicle);
-  const max = Math.min(MAX_PER_PURCHASE, vehicle.quantity);
+  const several = vehicle.colours.length > 1;
+  const colour = vehicle.colours.find((c) => c.id === colourId) ?? bestStocked(vehicle.colours);
+  const max = Math.min(MAX_PER_PURCHASE, colour?.quantity ?? 0);
   const soldOut = vehicle.quantity === 0;
 
+  function chooseColour(id: string) {
+    setColourId(id);
+    const stock = vehicle.colours.find((c) => c.id === id)?.quantity ?? 1;
+    setQuantity((q) => Math.min(q, Math.max(stock, 1)));
+  }
+
   function confirm() {
+    if (!colour) return;
     purchase.mutate(
-      { id: vehicle.id, quantity },
+      { id: vehicle.id, quantity, colourId: colour.id },
       {
         onSuccess: () => {
-          toast.success(`Purchased ${quantity} × ${name}`);
+          toast.success(`Purchased ${quantity} × ${name}${several ? ` in ${colour.name}` : ''}`);
           setOpen(false);
         },
         onError: (err) => toast.error(`Couldn't complete the purchase: ${errorMessage(err)}`),
@@ -41,14 +52,20 @@ function PurchaseControl({ vehicle }: { vehicle: Vehicle }) {
         aria-expanded={open}
         onClick={() => {
           setQuantity(1);
+          setColourId(bestStocked(vehicle.colours)?.id ?? '');
           setOpen((o) => !o);
         }}
       >
         Purchase
       </Button>
       {open && (
-        <Popover label={`Purchase ${name}`} onClose={() => setOpen(false)}>
+        <Popover label={`Purchase ${name}`} onClose={() => setOpen(false)} className="w-72 p-3">
           <p className="mb-2.5 truncate font-medium">{name}</p>
+          {several && colour && (
+            <div className="mb-3">
+              <ColourPicker colours={vehicle.colours} value={colour.id} onChange={chooseColour} disableSoldOut />
+            </div>
+          )}
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="inline-flex items-center rounded-control border border-border-strong">
               <button
@@ -90,7 +107,9 @@ function PurchaseControl({ vehicle }: { vehicle: Vehicle }) {
           <Button variant="primary" className="w-full" disabled={purchase.isPending} onClick={confirm}>
             {purchase.isPending ? 'Purchasing…' : 'Confirm purchase'}
           </Button>
-          <p className="mt-2 text-xs text-muted">{vehicle.quantity} in stock</p>
+          <p className="mt-2 text-xs text-muted">
+            {several && colour ? `${colour.quantity} in ${colour.name}` : `${vehicle.quantity} in stock`}
+          </p>
         </Popover>
       )}
     </span>

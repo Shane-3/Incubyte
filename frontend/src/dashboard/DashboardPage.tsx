@@ -157,6 +157,7 @@ export function DashboardPage() {
             onSort={onSort}
             forecastById={forecastById}
             actions={{ primary: primaryFor, menu: menuFor }}
+            onOpen={(vehicle) => setPanel({ kind: 'detail', vehicle })}
             footer={
               filters.view !== 'at-risk' && (
                 <Pagination

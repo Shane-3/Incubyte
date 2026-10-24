@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '../api/client';
-import type { VehicleInput } from '../api/types';
+import type { NewVehicleInput, VehicleInput } from '../api/types';
 import { useApi } from '../app/ApiContext';
 import { queryKeys } from './queries';
 
@@ -24,7 +24,8 @@ export function usePurchase() {
   const api = useApi();
   const invalidate = useInvalidateInventory();
   return useMutation({
-    mutationFn: ({ id, quantity }: { id: string; quantity: number }) => api.vehicles.purchase(id, quantity),
+    mutationFn: ({ id, quantity, colourId }: { id: string; quantity: number; colourId: string }) =>
+      api.vehicles.purchase(id, quantity, colourId),
     onSettled: invalidate,
   });
 }
@@ -32,7 +33,7 @@ export function usePurchase() {
 export function useCreateVehicle() {
   const api = useApi();
   const invalidate = useInvalidateInventory();
-  return useMutation({ mutationFn: (input: VehicleInput) => api.vehicles.create(input), onSuccess: invalidate });
+  return useMutation({ mutationFn: (input: NewVehicleInput) => api.vehicles.create(input), onSuccess: invalidate });
 }
 
 export function useUpdateVehicle() {
@@ -48,7 +49,8 @@ export function useRestock() {
   const api = useApi();
   const invalidate = useInvalidateInventory();
   return useMutation({
-    mutationFn: ({ id, quantity }: { id: string; quantity: number }) => api.vehicles.restock(id, quantity),
+    mutationFn: ({ id, quantity, colourId }: { id: string; quantity: number; colourId: string }) =>
+      api.vehicles.restock(id, quantity, colourId),
     onSuccess: invalidate,
   });
 }

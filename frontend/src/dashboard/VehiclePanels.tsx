@@ -4,11 +4,13 @@ import { Drawer } from '../components/ui/Drawer';
 import { useToast } from '../components/ui/Toast';
 import { errorMessage, useCreateVehicle, useDeleteVehicle, useRestock, useUpdateVehicle } from './mutations';
 import { RestockForm } from './RestockForm';
+import { VehicleDetail } from './VehicleDetail';
 import { changedFields, VehicleForm } from './VehicleForm';
 import { vehicleName } from './VehicleTable';
 
 export type Panel =
   | { kind: 'add' }
+  | { kind: 'detail'; vehicle: Vehicle }
   | { kind: 'edit'; vehicle: Vehicle }
   | { kind: 'restock'; vehicle: Vehicle }
   | { kind: 'delete'; vehicle: Vehicle };
@@ -32,13 +34,21 @@ export function VehiclePanels({ panel, onClose, forecastById, windowDays }: Vehi
 
   if (panel.kind === 'add') {
     return (
-      <Drawer title="Add vehicle" description="It appears in the inventory straight away." onClose={onClose}>
+      <Drawer
+        title="Add vehicle"
+        description="A make and model already listed gets this colour added to it."
+        onClose={onClose}
+      >
         <VehicleForm
-          submitLabel="Add vehicle"
+          mode="add"
           onCancel={onClose}
           onSubmit={async (input) => {
-            const created = await create.mutateAsync(input);
-            toast.success(`Added ${vehicleName(created)}`);
+            const { vehicle, merged } = await create.mutateAsync(input);
+            toast.success(
+              merged
+                ? `Added ${input.quantity} × ${input.colour?.name ?? 'Standard'} to ${vehicleName(vehicle)}`
+                : `Added ${vehicleName(vehicle)}`,
+            );
             onClose();
           }}
         />
@@ -49,12 +59,16 @@ export function VehiclePanels({ panel, onClose, forecastById, windowDays }: Vehi
   const { vehicle } = panel;
   const name = vehicleName(vehicle);
 
+  if (panel.kind === 'detail') {
+    return <VehicleDetail vehicle={vehicle} onClose={onClose} />;
+  }
+
   if (panel.kind === 'edit') {
     return (
       <Drawer title={`Edit ${name}`} onClose={onClose}>
         <VehicleForm
+          mode="edit"
           initial={vehicle}
-          submitLabel="Save changes"
           onCancel={onClose}
           onSubmit={async (input) => {
             const changes = changedFields(vehicle, input);
@@ -78,8 +92,8 @@ export function VehiclePanels({ panel, onClose, forecastById, windowDays }: Vehi
           suggested={suggestion || undefined}
           windowDays={windowDays}
           onCancel={onClose}
-          onSubmit={async (quantity) => {
-            const updated = await restock.mutateAsync({ id: vehicle.id, quantity });
+          onSubmit={async (quantity, colourId) => {
+            const updated = await restock.mutateAsync({ id: vehicle.id, quantity, colourId });
             toast.success(`Restocked ${name}: ${updated.quantity} in stock`);
             onClose();
           }}

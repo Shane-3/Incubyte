@@ -8,6 +8,7 @@ const STOCK: StockStatus[] = ['in', 'low', 'out'];
 
 export interface Filters {
   make: string;
+  colour: string;
   model: string;
   category: Category | '';
   minPrice: string;
@@ -21,7 +22,7 @@ export interface Filters {
   pageSize: number;
 }
 
-const FILTER_KEYS = ['make', 'model', 'category', 'minPrice', 'maxPrice'] as const;
+const FILTER_KEYS = ['make', 'model', 'colour', 'category', 'minPrice', 'maxPrice'] as const;
 
 function numberOr(value: string | null, fallback: number) {
   const n = Number(value);
@@ -39,6 +40,7 @@ export function useFilters() {
     const pageSize = numberOr(params.get('pageSize'), 25);
     return {
       make: params.get('make') ?? '',
+      colour: params.get('colour') ?? '',
       model: params.get('model') ?? '',
       category: (CATEGORIES as readonly string[]).includes(category) ? (category as Category) : '',
       minPrice: params.get('minPrice') ?? '',
@@ -91,6 +93,7 @@ export function toVehicleQuery(f: Filters): VehicleQuery {
   const atRisk = f.view === 'at-risk';
   return {
     make: f.make || undefined,
+    colour: f.colour || undefined,
     model: f.model || undefined,
     category: f.category || undefined,
     minPrice: Number.isFinite(min) ? min : undefined,

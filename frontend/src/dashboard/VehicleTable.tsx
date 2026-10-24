@@ -2,6 +2,8 @@ import { ArrowDown, ArrowUp, ChevronsUpDown, MoreHorizontal } from 'lucide-react
 import type { ReactNode } from 'react';
 import type { SortField, Vehicle, VehicleForecast } from '../api/types';
 import { Menu, type MenuItem } from '../components/ui/Menu';
+import { CarIllustration } from '../components/CarIllustration';
+import { bestStocked, ColourSwatches } from '../components/ColourSwatches';
 import { formatPrice } from '../lib/format';
 import { AtRiskPill, StockPill } from './StockStatus';
 
@@ -20,7 +22,14 @@ interface VehicleTableProps {
   /** Present for admins only; adds the Days left column. */
   forecastById?: Map<string, VehicleForecast>;
   actions: RowActions;
+  /** Opens the vehicle's detail view. */
+  onOpen: (vehicle: Vehicle) => void;
   footer?: ReactNode;
+}
+
+/** The colour the thumbnail shows: the best-stocked one, so the row looks like what is on the lot. */
+function thumbnailColour(v: Vehicle) {
+  return bestStocked(v.colours)?.hex ?? '#8a8f98';
 }
 
 export function vehicleName(v: Pick<Vehicle, 'make' | 'model'>) {
@@ -70,7 +79,7 @@ function SkeletonRows({ columns }: { columns: number }) {
   return (
     <>
       {Array.from({ length: 6 }, (_, i) => (
-        <tr key={i} className="h-11 border-t border-border">
+        <tr key={i} className="h-14 border-t border-border">
           {Array.from({ length: columns }, (_, j) => (
             <td key={j} className="px-3">
               <span className="block h-3 w-3/4 animate-pulse rounded bg-surface-hover" />
@@ -90,6 +99,7 @@ export function VehicleTable({
   onSort,
   forecastById,
   actions,
+  onOpen,
   footer,
 }: VehicleTableProps) {
   const showForecast = forecastById !== undefined;
@@ -140,10 +150,29 @@ export function VehicleTable({
                 return (
                   <tr
                     key={v.id}
-                    className="h-11 border-t border-border transition-colors hover:bg-surface-hover max-md:grid max-md:h-auto max-md:grid-cols-[minmax(0,1fr)_auto] max-md:items-center max-md:gap-x-3 max-md:gap-y-2 max-md:py-3 max-md:first:border-t-0"
+                    className="h-14 border-t border-border transition-colors hover:bg-surface-hover max-md:grid max-md:h-auto max-md:grid-cols-[minmax(0,1fr)_auto] max-md:items-center max-md:gap-x-3 max-md:gap-y-2 max-md:py-3 max-md:first:border-t-0"
                   >
-                    <td className="px-3 font-medium text-text">
-                      <span className="block max-w-[28ch] truncate">{vehicleName(v)}</span>
+                    <td className="px-3 py-1.5">
+                      <span className="flex items-center gap-3">
+                        <CarIllustration
+                          category={v.category}
+                          hex={thumbnailColour(v)}
+                          className="h-7 w-[70px] shrink-0 max-sm:hidden"
+                        />
+                        <span className="min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => onOpen(v)}
+                            className="block max-w-[28ch] truncate text-left font-medium text-text hover:underline"
+                          >
+                            {vehicleName(v)}
+                          </button>
+                          <span className="mt-0.5 flex items-center gap-2">
+                            <span className="font-mono text-xs text-muted">{v.sku}</span>
+                            <ColourSwatches colours={v.colours} label={`Colours of ${vehicleName(v)}`} />
+                          </span>
+                        </span>
+                      </span>
                     </td>
                     <td className="px-3 text-muted max-lg:hidden">{v.category}</td>
                     <td className="px-3 text-right whitespace-nowrap tabular-nums">{formatPrice(v.price)}</td>

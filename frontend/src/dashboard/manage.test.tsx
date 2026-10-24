@@ -30,28 +30,30 @@ async function openRowAction(user: ReturnType<typeof renderApp>['user'], name: s
 }
 
 describe('add vehicle', () => {
-  it('adds a vehicle from the drawer', async () => {
+  // A model the fixture doesn't list (an existing make + model switches the form to adding a colour).
+  it('adds a new model from the drawer', async () => {
     const api = apiFor();
-    api.vehicles.create.mockResolvedValue({ vehicle: rav4, merged: false });
+    const chr = vehicle({ id: 'v-chr', model: 'C-HR', category: 'SUV', price: 26900, quantity: 3 });
+    api.vehicles.create.mockResolvedValue({ vehicle: chr, merged: false });
     const { user } = renderApp({ api });
 
     await user.click(await screen.findByRole('button', { name: 'Add vehicle' }));
     const drawer = screen.getByRole('dialog', { name: 'Add vehicle' });
     await user.type(within(drawer).getByLabelText('Make'), 'Toyota');
-    await user.type(within(drawer).getByLabelText('Model'), 'RAV4');
+    await user.type(within(drawer).getByLabelText('Model'), 'C-HR');
     await user.selectOptions(within(drawer).getByLabelText('Category'), 'SUV');
-    await user.type(within(drawer).getByLabelText('Price'), '31900');
+    await user.type(within(drawer).getByLabelText('Price'), '26900');
     await user.type(within(drawer).getByLabelText('Quantity'), '3');
     await user.click(within(drawer).getByRole('button', { name: 'Add vehicle' }));
 
     expect(api.vehicles.create).toHaveBeenCalledWith({
       make: 'Toyota',
-      model: 'RAV4',
+      model: 'C-HR',
       category: 'SUV',
-      price: 31900,
+      price: 26900,
       quantity: 3,
     });
-    expect(await screen.findByText('Added Toyota RAV4')).toBeInTheDocument();
+    expect(await screen.findByText('Added Toyota C-HR')).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
