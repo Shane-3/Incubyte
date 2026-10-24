@@ -3,7 +3,9 @@ import express, { type Express } from 'express';
 import type { Config } from './config';
 import { createAuthController } from './controllers/auth.controller';
 import { authenticate } from './middleware/authenticate';
+import { requireJsonBody, requireTrustedOrigin } from './middleware/csrf';
 import { errorHandler, notFound } from './middleware/error-handler';
+import { securityHeaders } from './middleware/security-headers';
 import type { IUserRepository } from './repositories/user.repository';
 import { authRoutes } from './routes/auth.routes';
 import { AuthService } from './services/auth.service';
@@ -24,6 +26,9 @@ export function createApp(deps: AppDeps): Express {
   const { config } = deps;
   const app = express();
   app.disable('x-powered-by');
+  app.use(securityHeaders(config.env === 'production'));
+  app.use(requireTrustedOrigin(config.corsOrigin));
+  app.use(requireJsonBody);
   app.use(express.json({ limit: '10kb' }));
   app.use(cookieParser());
 

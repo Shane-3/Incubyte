@@ -70,3 +70,12 @@ export class NotFoundError extends AppError {
     super(message);
   }
 }
+
+export class UnsupportedMediaTypeError extends AppError {
+  readonly status = 415;
+  readonly code = 'UNSUPPORTED_MEDIA_TYPE';
+
+  constructor() {
+    super('Request body must be application/json');
+  }
+}

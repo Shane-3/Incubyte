@@ -91,7 +91,10 @@ describe('security headers', () => {
 
     const res = await request(app).get('/api/auth/me');
 
-    expect(res.headers['content-security-policy']).toBe("default-src 'none'; frame-ancestors 'none'");
+    expect(res.headers['content-security-policy']?.split(/;\s*/)).toEqual([
+      "default-src 'none'",
+      "frame-ancestors 'none'",
+    ]);
     expect(res.headers['x-content-type-options']).toBe('nosniff');
     expect(res.headers['x-frame-options']).toBe('DENY');
     expect(res.headers['referrer-policy']).toBe('no-referrer');
