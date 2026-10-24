@@ -1,8 +1,18 @@
 import type { Queryable } from '../db/transaction';
-import type { AdminAlert, AdminAlertType } from '../types/notification';
+import type { AdminAlert, AdminAlertType, InboxOptions, NotificationView } from '../types/notification';
 
-/** All notification storage. Reader methods arrive with the notifications API. */
-export interface INotificationRepository extends IAlertWriter, IWatcherNotifier {}
+/** All notification storage: the inbox reader plus the writers used inside stock-change transactions. */
+export interface INotificationRepository extends INotificationInbox, IAlertWriter, IWatcherNotifier {}
+
+/** Every method is scoped to one recipient, taken from the verified session, never from client input. */
+export interface INotificationInbox {
+  listFor(recipientId: string, options: InboxOptions): Promise<NotificationView[]>;
+  unreadCount(recipientId: string): Promise<number>;
+  /** Null when the notification does not exist or belongs to someone else. Keeps the first read time. */
+  markRead(recipientId: string, notificationId: string): Promise<NotificationView | null>;
+  /** Returns how many notifications changed. */
+  markAllRead(recipientId: string): Promise<number>;
+}
 
 /** Back-in-stock fan-out, used inside stock-change transactions. */
 export interface IWatcherNotifier {

@@ -1,10 +1,26 @@
 import type { Pool } from 'pg';
 import type { Queryable } from '../db/transaction';
-import type { AdminAlert, AdminAlertType } from '../types/notification';
+import type { AdminAlert, AdminAlertType, InboxOptions, NotificationView } from '../types/notification';
 import type { INotificationRepository } from './notification.repository';
 
 export class PgNotificationRepository implements INotificationRepository {
   constructor(private readonly pool: Pool) {}
+
+  async listFor(_recipientId: string, _options: InboxOptions): Promise<NotificationView[]> {
+    throw new Error('Not implemented');
+  }
+
+  async unreadCount(_recipientId: string): Promise<number> {
+    throw new Error('Not implemented');
+  }
+
+  async markRead(_recipientId: string, _notificationId: string): Promise<NotificationView | null> {
+    throw new Error('Not implemented');
+  }
+
+  async markAllRead(_recipientId: string): Promise<number> {
+    throw new Error('Not implemented');
+  }
 
   async notifyAdmins(tx: Queryable, { type, vehicleId, quantity }: AdminAlert): Promise<void> {
     // The conflict target matches the partial unique index, so an alert that is already open is left alone.

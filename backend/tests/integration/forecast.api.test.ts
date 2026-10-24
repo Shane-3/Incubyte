@@ -83,7 +83,7 @@ describe('GET /api/vehicles/forecast', () => {
     for (const path of ['/api/vehicles', '/api/vehicles/search?make=Toyota']) {
       const res = await api.get(path, user);
       expect(Object.keys(res.body.data[0]).sort()).toEqual(
-        ['category', 'createdAt', 'id', 'make', 'model', 'price', 'quantity', 'updatedAt'].sort(),
+        ['category', 'createdAt', 'id', 'isWatching', 'make', 'model', 'price', 'quantity', 'updatedAt'].sort(),
       );
     }
   });
