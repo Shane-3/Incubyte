@@ -88,7 +88,7 @@ Results on 2026-10-25:
 | Package | Test files | Tests | Statements | Branches | Functions | Lines |
 |---|---|---|---|---|---|---|
 | Backend | 30 | 388 passed | 98.2% | 91.0% | 99.5% | 99.7% |
-| Frontend | 9 | 91 passed | 89.4% | 87.2% | 85.0% | 92.2% |
+| Frontend | 9 | 92 passed | 89.5% | 86.9% | 85.3% | 92.3% |
 
 What the backend suite covers:
 
@@ -172,6 +172,7 @@ Security is a release gate here ([security.md](security.md)). In short:
 
 - **At risk view:** filtered in the browser over the first 100 vehicles (the API caps a page at 100). That's fine for a single lot; a bigger inventory would need a server-side forecast filter.
 - **Days left column:** shown but not sortable, because sorting needs the forecast on the server.
+- **Narrow screens:** below 768 px the table shows vehicle, price, stock and actions as stacked rows, sorted from a select. Category appears from 1024 px and Days left from 1024 px.
 - **Notifications:** delivered in-app only, by polling every 30 seconds (no email, push or SSE).
 - **Production deploy:** not done. Fill in the API host in `frontend/vercel.json` and set `TRUST_PROXY` behind the host's proxy.
 
