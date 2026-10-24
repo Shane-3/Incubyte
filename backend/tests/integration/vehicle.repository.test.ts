@@ -12,7 +12,7 @@ describe('PgVehicleRepository', () => {
 
   beforeAll(async () => {
     pool = await openTestDb();
-    repo = new PgVehicleRepository(pool);
+    repo = new PgVehicleRepository(pool, 3);
   });
 
   beforeEach(() => resetDb(pool));
@@ -125,6 +125,41 @@ describe('PgVehicleRepository', () => {
         expect((await repo.search({}, defaults)).count).toBe(6);
       },
     );
+  });
+
+  describe('stock status filter (threshold 3)', () => {
+    beforeEach(seedLot);
+
+    it('finds sold-out vehicles', async () => {
+      expect(await names({ stock: 'out' })).toEqual(['Toyota Corolla']);
+    });
+
+    it('finds low-stock vehicles: 1 to the threshold', async () => {
+      expect(await names({ stock: 'low' })).toEqual(['Ford F-150', 'Toyota RAV4']);
+    });
+
+    it('finds everything in stock', async () => {
+      expect(await names({ stock: 'in' })).not.toContain('Toyota Corolla');
+      expect((await repo.search({ stock: 'in' }, defaults)).count).toBe(5);
+    });
+  });
+
+  describe('stats', () => {
+    it('summarises the whole inventory', async () => {
+      await seedLot();
+
+      expect(await repo.stats()).toEqual({
+        models: 6,
+        units: 21,
+        inventoryValue: 662504.97,
+        outOfStock: 1,
+        lowStock: 2,
+      });
+    });
+
+    it('reports zeros for an empty lot', async () => {
+      expect(await repo.stats()).toEqual({ models: 0, units: 0, inventoryValue: 0, outOfStock: 0, lowStock: 0 });
+    });
   });
 
   describe('update and delete', () => {

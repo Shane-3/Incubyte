@@ -135,8 +135,13 @@ describe('searchQuerySchema', () => {
     ['offset', { offset: '-1' }],
     ['make', { make: ['a', 'b'] }],
     ['category', { category: 'Spaceship' }],
+    ['stock', { stock: 'some' }],
   ])('rejects an invalid %s', (field, query) => {
     expect(failedFields(searchQuerySchema.safeParse(query))).toEqual([field]);
+  });
+
+  it.each(['in', 'low', 'out'])('accepts the stock status %s', (stock) => {
+    expect(searchQuerySchema.parse({ stock }).stock).toBe(stock);
   });
 
   it('allows wildcard characters in text filters, to be matched literally by the repository', () => {

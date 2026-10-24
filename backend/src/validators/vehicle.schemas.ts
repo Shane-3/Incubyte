@@ -70,6 +70,7 @@ export const searchQuerySchema = z
     category: optionalQuery(category),
     minPrice: optionalQuery(queryPrice),
     maxPrice: optionalQuery(queryPrice),
+    stock: optionalQuery(z.never()),
     sort: z.enum(SORT_FIELDS).default('make'),
     order: z.enum(['asc', 'desc']).default('asc'),
     limit: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(25),

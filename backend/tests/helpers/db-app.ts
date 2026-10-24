@@ -16,7 +16,7 @@ import { FRONTEND_ORIGIN, testConfig } from './test-app';
 /** The real app on the test database. Only hashing and token signing are faked, for speed and readability. */
 export function buildDbApp(pool: Pool, overrides: Partial<AppDeps> = {}) {
   const users = new PgUserRepository(pool);
-  const vehicles = new PgVehicleRepository(pool);
+  const vehicles = new PgVehicleRepository(pool, 3);
   const tokens = new FakeTokenService();
   const app = createApp({
     users,

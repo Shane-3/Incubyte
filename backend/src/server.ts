@@ -23,7 +23,7 @@ const pool = new Pool({
 
 const app = createApp({
   users: new PgUserRepository(pool),
-  vehicles: new PgVehicleRepository(pool),
+  vehicles: new PgVehicleRepository(pool, config.lowStockThreshold),
   stock: new PgStockRepository(),
   transactions: new PgTransactionRunner(pool),
   notifications: new PgNotificationRepository(pool),

@@ -24,6 +24,19 @@ export interface VehicleFilters {
   category?: Category;
   minPrice?: number;
   maxPrice?: number;
+  stock?: StockStatus;
+}
+
+export const STOCK_STATUSES = ['in', 'low', 'out'] as const;
+/** in: any stock; low: 1 to the low-stock threshold; out: none. */
+export type StockStatus = (typeof STOCK_STATUSES)[number];
+
+export interface InventoryStats {
+  models: number;
+  units: number;
+  inventoryValue: number;
+  outOfStock: number;
+  lowStock: number;
 }
 
 export const SORT_FIELDS = ['make', 'model', 'category', 'price', 'quantity', 'createdAt'] as const;

@@ -148,6 +148,29 @@ describe('vehicles API', () => {
     it('requires a session', async () => {
       expect((await api.get('/api/vehicles/search?make=Toyota')).status).toBe(401);
     });
+
+    it('filters by stock status', async () => {
+      await seedLot();
+
+      const res = await api.get('/api/vehicles/search?stock=low&sort=model', user);
+
+      expect(res.body.data.map((v: { model: string }) => v.model)).toEqual(['F-150', 'RAV4']);
+    });
+  });
+
+  describe('GET /api/vehicles/stats', () => {
+    it('returns inventory totals for the KPI strip', async () => {
+      await seedLot();
+
+      const res = await api.get('/api/vehicles/stats', user);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ models: 6, units: 21, inventoryValue: 662504.97, outOfStock: 1, lowStock: 2 });
+    });
+
+    it('requires a session', async () => {
+      expect((await api.get('/api/vehicles/stats')).status).toBe(401);
+    });
   });
 
   describe('PUT /api/vehicles/:id', () => {

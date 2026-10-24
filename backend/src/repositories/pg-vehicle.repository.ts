@@ -2,6 +2,7 @@ import type { Pool } from 'pg';
 import { isUuid } from '../db/errors';
 import type {
   Category,
+  InventoryStats,
   ListOptions,
   NewVehicle,
   Page,
@@ -81,7 +82,14 @@ function whereClause(filters: VehicleFilters): { sql: string; params: unknown[] 
 }
 
 export class PgVehicleRepository implements IVehicleRepository {
-  constructor(private readonly pool: Pool) {}
+  constructor(
+    private readonly pool: Pool,
+    private readonly lowStockThreshold = 3,
+  ) {}
+
+  async stats(): Promise<InventoryStats> {
+    throw new Error('Not implemented');
+  }
 
   async create({ make, model, category, price, quantity }: NewVehicle): Promise<Vehicle> {
     const { rows } = await this.pool.query<VehicleRow>(

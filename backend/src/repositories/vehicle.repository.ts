@@ -1,4 +1,5 @@
 import type {
+  InventoryStats,
   ListOptions,
   NewVehicle,
   Page,
@@ -17,4 +18,6 @@ export interface IVehicleRepository {
   update(id: string, changes: VehicleChanges): Promise<Vehicle | null>;
   /** Returns false when the vehicle did not exist. */
   delete(id: string): Promise<boolean>;
+  /** Totals across the whole inventory, independent of any page. */
+  stats(): Promise<InventoryStats>;
 }
