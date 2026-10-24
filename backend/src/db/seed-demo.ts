@@ -163,13 +163,19 @@ function random(seed: number): () => number {
 }
 
 /** Loads a realistic demo lot and 30 days of sales. Refuses to touch a database that already has stock. */
-export async function seedDemoData(pool: Pool, { now }: SeedOptions): Promise<void> {
+export async function seedDemoData(pool: Pool, { now, replace = false }: SeedOptions): Promise<void> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    if (replace) {
+      // Colours, sales, alerts and watches go with their vehicles (ON DELETE CASCADE). Accounts stay.
+      await client.query('DELETE FROM vehicles');
+    }
     const { rows: existing } = await client.query<{ n: number }>('SELECT count(*)::int AS n FROM vehicles');
     if (existing[0]!.n > 0) {
-      throw new Error('Database already has vehicles; the demo seed only runs on an empty inventory');
+      throw new Error(
+        'Database already has vehicles; the demo seed only runs on an empty inventory (use --replace to swap the lot)',
+      );
     }
 
     // Historic sales need a buyer. "!disabled" is not a bcrypt hash, so this account can never sign in.
