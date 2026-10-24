@@ -20,7 +20,9 @@ export class StockChangeService {
       const { vehicle, before } =
         change.kind === 'purchase'
           ? await this.purchase(tx, vehicleId, change)
-          : await this.restock(tx, vehicleId, change.quantity);
+          : change.kind === 'restock'
+            ? await this.restock(tx, vehicleId, change.quantity)
+            : await this.set();
 
       for (const handler of this.handlers) {
         await handler.handle({ change, vehicle, before, after: vehicle.quantity }, tx);
@@ -43,6 +45,10 @@ export class StockChangeService {
       unitPrice: vehicle.price,
     });
     return { vehicle, before: vehicle.quantity + change.quantity };
+  }
+
+  private async set(): Promise<{ vehicle: Vehicle; before: number }> {
+    throw new Error('Not implemented');
   }
 
   private async restock(tx: Queryable, vehicleId: string, quantity: number) {

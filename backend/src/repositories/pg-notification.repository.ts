@@ -18,6 +18,10 @@ export class PgNotificationRepository implements INotificationRepository {
     );
   }
 
+  async notifyWatchers(_tx: Queryable, _vehicleId: string, _quantity: number): Promise<number> {
+    throw new Error('Not implemented');
+  }
+
   async resolveAlerts(tx: Queryable, vehicleId: string, types: AdminAlertType[]): Promise<void> {
     await tx.query(
       `UPDATE notifications SET resolved_at = now()

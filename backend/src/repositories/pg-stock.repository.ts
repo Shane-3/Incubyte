@@ -1,6 +1,6 @@
 import { isUuid } from '../db/errors';
 import type { Queryable } from '../db/transaction';
-import type { Vehicle } from '../types/vehicle';
+import type { Vehicle, VehicleChanges } from '../types/vehicle';
 import { toVehicle, VEHICLE_COLUMNS, type VehicleRow } from './pg-vehicle.repository';
 import type { IStockRepository, PurchaseRecord } from './stock.repository';
 
@@ -24,6 +24,15 @@ export class PgStockRepository implements IStockRepository {
       [vehicleId, quantity],
     );
     return rows[0] ? toVehicle(rows[0]) : null;
+  }
+
+  async set(
+    _tx: Queryable,
+    _vehicleId: string,
+    _quantity: number,
+    _fields: VehicleChanges,
+  ): Promise<{ vehicle: Vehicle; before: number } | null> {
+    throw new Error('Not implemented');
   }
 
   async findById(tx: Queryable, vehicleId: string): Promise<Vehicle | null> {

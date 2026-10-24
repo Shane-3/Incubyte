@@ -3,7 +3,7 @@ import type { ITransactionRunner, Queryable } from '../../src/db/transaction';
 import type { IStockRepository, PurchaseRecord } from '../../src/repositories/stock.repository';
 import { StockChangeService } from '../../src/services/stock-change.service';
 import type { IStockChangeHandler, StockChangeEvent } from '../../src/types/stock';
-import type { Vehicle } from '../../src/types/vehicle';
+import type { Vehicle, VehicleChanges } from '../../src/types/vehicle';
 
 const TX = { query: vi.fn() } as unknown as Queryable;
 
@@ -44,6 +44,15 @@ class FakeStockRepository implements IStockRepository {
     if (!v) return null;
     v.quantity += quantity;
     return { ...v };
+  }
+
+  async set(tx: Queryable, id: string, quantity: number, fields: VehicleChanges) {
+    this.txSeen.push(tx);
+    const v = this.vehicles.get(id);
+    if (!v) return null;
+    const before = v.quantity;
+    Object.assign(v, fields, { quantity });
+    return { vehicle: { ...v }, before };
   }
 
   async findById(tx: Queryable, id: string) {
@@ -174,5 +183,25 @@ describe('StockChangeService', () => {
     );
     expect(runner.rolledBack).toBe(1);
     expect(runner.committed).toBe(0);
+  });
+});
+
+describe('StockChangeService set (edits that change quantity)', () => {
+  it('sets the quantity with the other edited fields and reports before and after', async () => {
+    const { stock, handler, service } = setup(0);
+
+    const vehicle = await service.apply('camry', { kind: 'set', quantity: 7, fields: { price: 25999 } });
+
+    expect(vehicle).toMatchObject({ quantity: 7, price: 25999 });
+    expect(stock.purchases).toEqual([]);
+    expect(handler.events[0]!.event).toMatchObject({ before: 0, after: 7, change: { kind: 'set' } });
+  });
+
+  it('rejects an unknown vehicle', async () => {
+    const { service } = setup();
+
+    await expect(service.apply('ghost', { kind: 'set', quantity: 1, fields: {} })).rejects.toBeInstanceOf(
+      VehicleNotFoundError,
+    );
   });
 });
