@@ -4,13 +4,15 @@ interface PopoverProps {
   label: string;
   onClose: () => void;
   children: ReactNode;
+  /** Width and padding overrides. */
+  className?: string;
 }
 
 /**
  * Small non-modal dialog anchored under its trigger (render it inside a relatively positioned wrapper).
  * Focus moves in on open; Escape and outside clicks close it.
  */
-export function Popover({ label, onClose, children }: PopoverProps) {
+export function Popover({ label, onClose, children, className = 'w-64 p-3' }: PopoverProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export function Popover({ label, onClose, children }: PopoverProps) {
       ref={ref}
       role="dialog"
       aria-label={label}
-      className="absolute top-full right-0 z-30 mt-1.5 w-64 rounded-panel border border-border bg-surface p-3 text-left shadow-float"
+      className={`absolute top-full right-0 z-30 mt-1.5 rounded-panel border border-border bg-surface text-left shadow-float ${className}`}
     >
       {children}
     </div>

@@ -4,6 +4,7 @@ import { Link, useLocation, useSearchParams } from 'react-router';
 import { useAuth } from '../auth/AuthProvider';
 import { Menu } from '../components/ui/Menu';
 import { Wordmark } from '../components/Wordmark';
+import { NotificationBell } from '../notifications/NotificationBell';
 import { applyTheme, currentTheme, storedTheme } from './theme';
 
 interface NavItem {
@@ -111,7 +112,7 @@ function AccountMenu() {
 }
 
 /** Fixed sidebar, slim top bar, and a slide-over nav below the lg breakpoint. */
-export function AppShell({ children, topbarEnd }: { children: ReactNode; topbarEnd?: ReactNode }) {
+export function AppShell({ children }: { children: ReactNode }) {
   const [navOpen, setNavOpen] = useState(false);
   const [params] = useSearchParams();
   const location = useLocation();
@@ -179,7 +180,7 @@ export function AppShell({ children, topbarEnd }: { children: ReactNode; topbarE
           Inventory <span aria-hidden="true">/</span> <span className="text-text">{currentViewLabel(params)}</span>
         </p>
         <div className="ml-auto flex items-center gap-2">
-          {topbarEnd}
+          <NotificationBell />
           <AccountMenu />
         </div>
       </header>

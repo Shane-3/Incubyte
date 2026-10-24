@@ -77,7 +77,10 @@ describe('notification bell', () => {
   it('words back-in-stock notices for the watcher', async () => {
     const { user } = renderApp({
       api: apiWithInbox(
-        { unreadCount: 1, data: [notice({ type: 'BACK_IN_STOCK', quantity: 4, vehicle: { id: 'v', make: 'Honda', model: 'CR-V' } })] },
+        {
+          unreadCount: 1,
+          data: [notice({ type: 'BACK_IN_STOCK', quantity: 4, vehicle: { id: 'v', make: 'Honda', model: 'CR-V' } })],
+        },
         priya,
       ),
     });
@@ -142,7 +145,9 @@ describe('notification bell', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Notifications, 1 unread' }));
 
-    expect(screen.getByRole('dialog', { name: 'Notifications' })).toHaveTextContent('<img src=x onerror=alert(1)> X: 2 left');
+    expect(screen.getByRole('dialog', { name: 'Notifications' })).toHaveTextContent(
+      '<img src=x onerror=alert(1)> X: 2 left',
+    );
     expect(document.querySelector('img')).toBeNull();
   });
 });
