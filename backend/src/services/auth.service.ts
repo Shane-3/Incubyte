@@ -1,4 +1,5 @@
-import { EmailTakenError } from '../errors';
+import { randomUUID } from 'node:crypto';
+import { EmailTakenError, InvalidCredentialsError } from '../errors';
 import type { IUserRepository } from '../repositories/user.repository';
 import type { PublicUser, User } from '../types/user';
 import type { IPasswordHasher } from './password-hasher';
@@ -42,8 +43,25 @@ export class AuthService {
     return toPublicUser(user);
   }
 
-  async login(_input: LoginInput): Promise<LoginResult> {
-    throw new Error('Not implemented');
+  async login(input: LoginInput): Promise<LoginResult> {
+    const user = await this.users.findByEmail(input.email.trim().toLowerCase());
+
+    // Compare against a dummy hash for unknown emails so response time does not reveal which accounts exist.
+    const hash = user?.passwordHash ?? (await this.dummyHash());
+    const passwordMatches = await this.hasher.compare(input.password, hash);
+    if (!user || !passwordMatches) {
+      throw new InvalidCredentialsError();
+    }
+
+    const token = this.tokens.sign({ sub: user.id, role: user.role });
+    return { user: toPublicUser(user), token };
+  }
+
+  private dummyHashPromise?: Promise<string>;
+
+  private dummyHash(): Promise<string> {
+    this.dummyHashPromise ??= this.hasher.hash(randomUUID());
+    return this.dummyHashPromise;
   }
 }
 
