@@ -9,6 +9,7 @@ import { errorHandler, notFound } from './middleware/error-handler';
 import { requireRole } from './middleware/require-role';
 import { securityHeaders } from './middleware/security-headers';
 import type { ITransactionRunner } from './db/transaction';
+import type { INotificationRepository } from './repositories/notification.repository';
 import type { IStockRepository } from './repositories/stock.repository';
 import type { IUserRepository } from './repositories/user.repository';
 import type { IVehicleRepository } from './repositories/vehicle.repository';
@@ -21,6 +22,8 @@ import type { IStockChangeHandler } from './types/stock';
 import { StockChangeService } from './services/stock-change.service';
 import { VehicleService } from './services/vehicle.service';
 
+export type AppConfig = Pick<Config, 'env' | 'corsOrigin' | 'jwtExpiresInSeconds' | 'lowStockThreshold'>;
+
 export interface AppDeps {
   users: IUserRepository;
   vehicles: IVehicleRepository;
@@ -30,7 +33,8 @@ export interface AppDeps {
   stockHandlers?: IStockChangeHandler[];
   hasher: IPasswordHasher;
   tokens: ITokenService;
-  config: Pick<Config, 'env' | 'corsOrigin' | 'jwtExpiresInSeconds'>;
+  notifications: INotificationRepository;
+  config: AppConfig;
   /** Receives unexpected errors. Defaults to console.error outside tests. */
   logError?: (err: unknown) => void;
 }

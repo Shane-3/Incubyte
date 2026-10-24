@@ -1,9 +1,13 @@
 import request from 'supertest';
-import { createApp, type AppDeps } from '../../src/app';
+import { type AppConfig, createApp, type AppDeps } from '../../src/app';
 import type { Role } from '../../src/types/user';
 import { FakePasswordHasher, FakeTokenService, InMemoryUserRepository, unusedRepository } from './fakes';
 
 export const FRONTEND_ORIGIN = 'http://localhost:5173';
+
+export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
+  return { env: 'test', corsOrigin: FRONTEND_ORIGIN, jwtExpiresInSeconds: 3600, lowStockThreshold: 3, ...overrides };
+}
 
 export function buildTestApp(overrides: Partial<AppDeps> = {}) {
   const users = new InMemoryUserRepository();
@@ -13,9 +17,10 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
     vehicles: unusedRepository('vehicles'),
     stock: unusedRepository('stock'),
     transactions: unusedRepository('transactions'),
+    notifications: unusedRepository('notifications'),
     hasher: new FakePasswordHasher(),
     tokens,
-    config: { env: 'test', corsOrigin: FRONTEND_ORIGIN, jwtExpiresInSeconds: 3600 },
+    config: testConfig(),
     ...overrides,
   };
   const app = createApp(deps);

@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { InMemoryUserRepository } from '../helpers/fakes';
-import { buildTestApp, FRONTEND_ORIGIN } from '../helpers/test-app';
+import { buildTestApp, FRONTEND_ORIGIN, testConfig } from '../helpers/test-app';
 
 const credentials = { email: 'priya.nair@example.com', password: 'S3curePass!' };
 
@@ -105,7 +105,7 @@ describe('security headers', () => {
   it('only sends HSTS in production', async () => {
     const dev = await request(buildTestApp().app).get('/api/auth/me');
     const prod = await request(
-      buildTestApp({ config: { env: 'production', corsOrigin: FRONTEND_ORIGIN, jwtExpiresInSeconds: 3600 } }).app,
+      buildTestApp({ config: testConfig({ env: 'production' }) }).app,
     ).get('/api/auth/me');
 
     expect(dev.headers['strict-transport-security']).toBeUndefined();

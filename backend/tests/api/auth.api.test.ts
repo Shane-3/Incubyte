@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { buildTestApp } from '../helpers/test-app';
+import { buildTestApp, testConfig } from '../helpers/test-app';
 
 const priya = { name: 'Priya Nair', email: 'priya.nair@example.com', password: 'S3curePass!' };
 
@@ -89,9 +89,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('marks the cookie Secure in production', async () => {
-    const { mutate } = buildTestApp({
-      config: { env: 'production', corsOrigin: 'http://localhost:5173', jwtExpiresInSeconds: 3600 },
-    });
+    const { mutate } = buildTestApp({ config: testConfig({ env: 'production' }) });
     await mutate('post', '/api/auth/register').send(priya);
 
     const res = await mutate('post', '/api/auth/login').send({ email: priya.email, password: priya.password });
