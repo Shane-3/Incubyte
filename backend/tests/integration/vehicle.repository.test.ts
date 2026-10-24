@@ -105,7 +105,7 @@ describe('PgVehicleRepository', () => {
       await repo.create(buildVehicle({ make: 'Odd_Make', model: '100% Electric' }));
 
       expect(await names({ make: '%' })).toEqual([]);
-      expect(await names({ make: '_' })).toEqual(['Odd_Make Camry']);
+      expect(await names({ make: '_' })).toEqual(['Odd_Make 100% Electric']);
       expect(await names({ model: '100%' })).toEqual(['Odd_Make 100% Electric']);
       expect(await names({ make: '\\' })).toEqual([]);
     });
