@@ -2,6 +2,7 @@ import type { Pool } from 'pg';
 import request from 'supertest';
 import { type AppDeps, createApp } from '../../src/app';
 import { PgTransactionRunner } from '../../src/db/transaction';
+import { UNLIMITED } from '../../src/middleware/rate-limit';
 import { PgNotificationRepository } from '../../src/repositories/pg-notification.repository';
 import { PgSalesRepository } from '../../src/repositories/pg-sales.repository';
 import { PgStockRepository } from '../../src/repositories/pg-stock.repository';
@@ -28,6 +29,7 @@ export function buildDbApp(pool: Pool, overrides: Partial<AppDeps> = {}) {
     hasher: new FakePasswordHasher(),
     tokens,
     config: testConfig(),
+    rateLimits: UNLIMITED,
     ...overrides,
   });
 

@@ -10,7 +10,7 @@ import { LowStockAlertHandler } from './handlers/low-stock-alert.handler';
 import { authenticate } from './middleware/authenticate';
 import { requireJsonBody, requireTrustedOrigin } from './middleware/csrf';
 import { errorHandler, notFound } from './middleware/error-handler';
-import type { RateLimits } from './middleware/rate-limit';
+import { createRateLimiters, DEFAULT_RATE_LIMITS, type RateLimits } from './middleware/rate-limit';
 import { requireRole } from './middleware/require-role';
 import { securityHeaders } from './middleware/security-headers';
 import type { INotificationRepository } from './repositories/notification.repository';
@@ -70,7 +70,12 @@ export function createApp(deps: AppDeps): Express {
   const { config } = deps;
   const app = express();
   app.disable('x-powered-by');
+  // Only trust X-Forwarded-For when a known proxy sits in front, or clients could spoof their IP past the limits.
+  app.set('trust proxy', config.trustProxy);
+  const limiters = createRateLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS);
+
   app.use(securityHeaders(config.env === 'production'));
+  app.use('/api', limiters.api);
   app.use(requireTrustedOrigin(config.corsOrigin));
   app.use(requireJsonBody);
   app.use(express.json({ limit: '10kb' }));
@@ -79,7 +84,7 @@ export function createApp(deps: AppDeps): Express {
   const requireSession = authenticate(deps.tokens);
 
   const authService = new AuthService(deps.users, deps.hasher, deps.tokens);
-  app.use('/api/auth', authRoutes(createAuthController(authService, config), requireSession));
+  app.use('/api/auth', authRoutes(createAuthController(authService, config), requireSession, limiters));
 
   const stockChanges = new StockChangeService(
     deps.transactions,
@@ -100,11 +105,18 @@ export function createApp(deps: AppDeps): Express {
     vehicleRoutes(createVehicleController(vehicleService, forecastService, watchService), {
       authenticate: requireSession,
       adminOnly: requireRole(deps.users)('admin'),
+      throttle: limiters.sensitive(),
     }),
   );
 
   const notificationService = new NotificationService(deps.notifications);
-  app.use('/api/notifications', notificationRoutes(createNotificationController(notificationService), requireSession));
+  app.use(
+    '/api/notifications',
+    notificationRoutes(createNotificationController(notificationService), {
+      authenticate: requireSession,
+      throttle: limiters.sensitive(),
+    }),
+  );
 
   app.use(notFound);
   const logError = deps.logError ?? (config.env === 'test' ? () => undefined : console.error);

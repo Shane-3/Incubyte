@@ -14,6 +14,8 @@ import {
 interface Guards {
   authenticate: RequestHandler;
   adminOnly: RequestHandler;
+  /** Per-IP limit for watch requests, which fan out into notifications later. */
+  throttle: RequestHandler;
 }
 
 export function vehicleRoutes(controller: ReturnType<typeof createVehicleController>, guards: Guards) {
@@ -35,7 +37,13 @@ export function vehicleRoutes(controller: ReturnType<typeof createVehicleControl
     validateBody(restockSchema),
     controller.restock,
   );
-  router.post('/:id/watch', validateParams(vehicleIdSchema), validateBody(emptyBodySchema), controller.watch);
+  router.post(
+    '/:id/watch',
+    guards.throttle,
+    validateParams(vehicleIdSchema),
+    validateBody(emptyBodySchema),
+    controller.watch,
+  );
   router.delete('/:id/watch', validateParams(vehicleIdSchema), controller.unwatch);
   router.delete('/:id', guards.adminOnly, validateParams(vehicleIdSchema), controller.remove);
   return router;

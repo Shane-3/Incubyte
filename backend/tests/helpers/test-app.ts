@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { type AppConfig, createApp, type AppDeps } from '../../src/app';
+import { UNLIMITED } from '../../src/middleware/rate-limit';
 import type { Role } from '../../src/types/user';
 import { FakePasswordHasher, FakeTokenService, InMemoryUserRepository, unusedRepository } from './fakes';
 
@@ -33,6 +34,7 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
     hasher: new FakePasswordHasher(),
     tokens,
     config: testConfig(),
+    rateLimits: UNLIMITED,
     ...overrides,
   };
   const app = createApp(deps);
