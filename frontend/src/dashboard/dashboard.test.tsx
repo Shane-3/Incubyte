@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { ApiError } from '../api/client';
 import type { Vehicle } from '../api/types';
 import { dana, fakeApi, priya, vehicle } from '../test/fake-api';
@@ -141,21 +141,47 @@ describe('role-based controls', () => {
 });
 
 describe('KPI strip', () => {
-  it('shows inventory totals from the stats endpoint', async () => {
+  /** The tile whose label is the given text. */
+  async function tile(label: string) {
+    const kpis = await screen.findByRole('region', { name: 'Inventory summary' });
+    return (await within(kpis).findByText(label, { selector: 'dt' })).closest('[data-kpi]') as HTMLElement;
+  }
+
+  it('gives each total the context it needs to read', async () => {
     renderApp({ api: apiFor(priya) });
 
-    const kpis = await screen.findByRole('region', { name: 'Inventory summary' });
-    expect(await within(kpis).findByText('32')).toBeInTheDocument();
-    expect(within(kpis).getByText('151')).toBeInTheDocument();
-    expect(within(kpis).getByText('$5,123,457')).toBeInTheDocument();
-    expect(within(kpis).getByText('Out of stock').parentElement).toHaveTextContent('3');
+    expect(await tile('Units in stock')).toHaveTextContent('151');
+    expect(await tile('Units in stock')).toHaveTextContent('across 32 models');
+    expect(await tile('Inventory value')).toHaveTextContent('$5,123,457');
+    expect(await tile('Inventory value')).toHaveTextContent('avg $33,930 per unit');
+    expect(await tile('Low stock')).toHaveTextContent('7');
+    expect(await tile('Low stock')).toHaveTextContent('3 or fewer left');
+    expect(await tile('Out of stock')).toHaveTextContent('3');
   });
 
-  it('adds an At risk tile for admins only', async () => {
+  it('opens the matching view from a status tile', async () => {
+    const api = apiFor(priya);
+    const { user } = renderApp({ api });
+
+    await user.click(within(await tile('Low stock')).getByRole('link'));
+
+    await waitFor(() => expect(api.vehicles.search.mock.lastCall?.[0]).toMatchObject({ stock: 'low' }));
+    expect(within(await tile('Low stock')).getByRole('link')).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('links the sold-out tile to the sold-out view', async () => {
+    renderApp({ api: apiFor(priya) });
+
+    expect(within(await tile('Out of stock')).getByRole('link')).toHaveAttribute('href', '/?stock=out');
+  });
+
+  it('adds an At risk tile for admins only, linking to the at-risk view', async () => {
     renderApp({ api: apiFor(dana) });
 
-    const kpis = await screen.findByRole('region', { name: 'Inventory summary' });
-    expect((await within(kpis).findByText('At risk')).parentElement).toHaveTextContent('2');
+    const atRisk = await tile('At risk');
+    await waitFor(() => expect(atRisk).toHaveTextContent('2'));
+    expect(atRisk).toHaveTextContent('may sell out within 7 days');
+    expect(within(atRisk).getByRole('link')).toHaveAttribute('href', '/?view=at-risk');
   });
 
   it('never asks for forecast data as a regular user', async () => {
@@ -185,5 +211,44 @@ describe('days left (admins)', () => {
 
     await rowFor('Toyota Camry');
     expect(screen.queryByRole('columnheader', { name: /Days left/ })).toBeNull();
+  });
+});
+
+describe('data freshness', () => {
+  it('says when the data was last loaded and refreshes it on demand', async () => {
+    const api = apiFor(priya);
+    const { user } = renderApp({ api });
+
+    await rowFor('Toyota Camry');
+    expect(screen.getByText('Updated just now')).toBeInTheDocument();
+    const searches = api.vehicles.search.mock.calls.length;
+    const stats = api.vehicles.stats.mock.calls.length;
+
+    await user.click(screen.getByRole('button', { name: 'Refresh data' }));
+
+    await waitFor(() => expect(api.vehicles.search.mock.calls.length).toBeGreaterThan(searches));
+    expect(api.vehicles.stats.mock.calls.length).toBeGreaterThan(stats);
+  });
+});
+
+describe('keyboard', () => {
+  it('jumps to the filters with "/"', async () => {
+    const { user } = renderApp({ api: apiFor(priya) });
+    await rowFor('Toyota Camry');
+
+    await user.keyboard('/');
+
+    expect(screen.getByLabelText('Make')).toHaveFocus();
+    expect(screen.getByLabelText('Make')).toHaveValue('');
+  });
+
+  it('leaves "/" alone while typing in a field', async () => {
+    const { user } = renderApp({ api: apiFor(priya) });
+    await rowFor('Toyota Camry');
+
+    await user.type(screen.getByLabelText('Model'), 'F/150');
+
+    expect(screen.getByLabelText('Model')).toHaveValue('F/150');
+    expect(screen.getByLabelText('Model')).toHaveFocus();
   });
 });
