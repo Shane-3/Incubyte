@@ -94,3 +94,21 @@ export class OutOfStockError extends AppError {
     super(available === 0 ? 'Vehicle is out of stock' : `Only ${available} left in stock`);
   }
 }
+
+export class InStockError extends AppError {
+  readonly status = 409;
+  readonly code = 'IN_STOCK';
+
+  constructor() {
+    super('Vehicle is in stock; only out-of-stock vehicles can be watched');
+  }
+}
+
+export class WatchLimitReachedError extends AppError {
+  readonly status = 409;
+  readonly code = 'WATCH_LIMIT_REACHED';
+
+  constructor(limit: number) {
+    super(`You can watch at most ${limit} vehicles`);
+  }
+}
