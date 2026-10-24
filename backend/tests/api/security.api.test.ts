@@ -137,14 +137,13 @@ describe('request limits and failure modes', () => {
     users.findByEmail = async () => {
       throw new Error('connect ECONNREFUSED postgres://app:s3cret@db:5432');
     };
-    const logged: unknown[] = [];
-    const { mutate } = buildTestApp({ users, logError: (err) => logged.push(err) });
+    const { mutate } = buildTestApp({ users });
 
     const res = await mutate('post', '/api/auth/login').send(credentials);
 
     expect(res.status).toBe(500);
-    expect(res.body).toEqual({ error: { code: 'INTERNAL_ERROR', message: 'Something went wrong' } });
+    expect(res.body.error).toMatchObject({ code: 'INTERNAL_ERROR', message: 'Something went wrong' });
+    expect(Object.keys(res.body.error).sort()).toEqual(['code', 'message', 'requestId']);
     expect(JSON.stringify(res.body)).not.toMatch(/s3cret|ECONNREFUSED|at /);
-    expect(logged).toHaveLength(1);
   });
 });

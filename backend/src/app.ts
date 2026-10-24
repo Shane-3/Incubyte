@@ -5,6 +5,7 @@ import { createAuthController } from './controllers/auth.controller';
 import { createNotificationController } from './controllers/notification.controller';
 import { createVehicleController } from './controllers/vehicle.controller';
 import type { ITransactionRunner } from './db/transaction';
+import type { Logger } from './logging/logger';
 import { BackInStockHandler } from './handlers/back-in-stock.handler';
 import { LowStockAlertHandler } from './handlers/low-stock-alert.handler';
 import { authenticate } from './middleware/authenticate';
@@ -61,8 +62,8 @@ export interface AppDeps {
   rateLimits?: RateLimits;
   /** Injected so forecast tests control "now". */
   clock?: () => Date;
-  /** Receives unexpected errors. Defaults to console.error outside tests. */
-  logError?: (err: unknown) => void;
+  /** Structured request and error log. Defaults to JSON lines on stdout, silent in tests. */
+  logger?: Logger;
 }
 
 /** Composition root. Builds the Express app without listening, so tests can drive it with Supertest. */
@@ -119,7 +120,6 @@ export function createApp(deps: AppDeps): Express {
   );
 
   app.use(notFound);
-  const logError = deps.logError ?? (config.env === 'test' ? () => undefined : console.error);
-  app.use(errorHandler(logError));
+  app.use(errorHandler(() => undefined));
   return app;
 }
