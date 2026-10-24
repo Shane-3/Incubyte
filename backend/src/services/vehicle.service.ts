@@ -11,6 +11,7 @@ import {
   type VehicleFilters,
   type VehicleView,
 } from '../types/vehicle';
+import type { ColourUnits } from '../types/stock';
 import type { StockChangeService } from './stock-change.service';
 
 export interface CreateResult {
@@ -36,8 +37,9 @@ export class VehicleService {
     return this.stockChanges.apply(id, { kind: 'purchase', quantity, userId, colourId });
   }
 
-  restock(id: string, quantity: number, colourId?: string): Promise<Vehicle> {
-    return this.stockChanges.apply(id, { kind: 'restock', quantity, colourId });
+  /** One colour (colourId), or several colours with their own units in one change. */
+  restock(id: string, quantity: number, colourId?: string, colours?: ColourUnits[]): Promise<Vehicle> {
+    return this.stockChanges.apply(id, { kind: 'restock', quantity, colourId, colours });
   }
 
   /**

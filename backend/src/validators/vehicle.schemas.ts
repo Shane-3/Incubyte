@@ -142,12 +142,37 @@ export const purchaseSchema = z.strictObject({
   colourId: z.uuid('must be a valid id').optional(),
 });
 
-export const restockSchema = z.strictObject({
-  quantity: quantity.min(1, 'must be at least 1'),
-  /** Required by the service when the model has several colours. */
-  colourId: z.uuid('must be a valid id').optional(),
-  colours: z.never().optional(),
-});
+const restockColours = z
+  .array(z.strictObject({ colourId: z.uuid('must be a valid id'), quantity }))
+  .min(1, 'must list at least one colour')
+  .max(MAX_COLOURS_PER_REQUEST, `must list at most ${MAX_COLOURS_PER_REQUEST} colours`)
+  .superRefine((list, ctx) => {
+    const seen = new Set<string>();
+    list.forEach((c, i) => {
+      if (seen.has(c.colourId)) ctx.addIssue({ code: 'custom', path: [i, 'colourId'], message: 'is listed twice' });
+      seen.add(c.colourId);
+    });
+  });
+
+/** One colour (colourId), or several colours with their own units totalling `quantity`. */
+export const restockSchema = z
+  .strictObject({
+    quantity: quantity.min(1, 'must be at least 1'),
+    /** Required by the service when the model has several colours and no colours list is given. */
+    colourId: z.uuid('must be a valid id').optional(),
+    colours: restockColours.optional(),
+  })
+  .superRefine((input, ctx) => {
+    if (!input.colours) return;
+    if (input.colourId) {
+      ctx.addIssue({ code: 'custom', path: ['colours'], message: 'send either colourId or colours, not both' });
+      return;
+    }
+    const total = input.colours.reduce((sum, c) => sum + c.quantity, 0);
+    if (input.quantity !== total) {
+      ctx.addIssue({ code: 'custom', path: ['quantity'], message: `must equal the total of the colours (${total})` });
+    }
+  });
 
 /** For endpoints that take no body: anything sent is a client trying to set fields it does not own. */
 export const emptyBodySchema = z.strictObject({});

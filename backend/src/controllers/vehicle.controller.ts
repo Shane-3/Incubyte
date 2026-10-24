@@ -45,8 +45,8 @@ export function createVehicleController(vehicles: VehicleService, forecasts: For
 
     async restock(req: Request, res: Response) {
       const { id } = res.locals.params as { id: string };
-      const { quantity, colourId } = req.body as RestockBody;
-      res.json({ vehicle: await vehicles.restock(id, quantity, colourId) });
+      const { quantity, colourId, colours } = req.body as RestockBody;
+      res.json({ vehicle: await vehicles.restock(id, quantity, colourId, colours) });
     },
 
     async watch(req: Request, res: Response) {

@@ -267,15 +267,13 @@ describe('colour variants', () => {
       const watcher = await api.login('user');
       await api.mutate('post', `/api/vehicles/${created.body.vehicle.id}/watch`, watcher.cookie);
 
-      const res = await api
-        .mutate('post', `/api/vehicles/${created.body.vehicle.id}/restock`, admin)
-        .send({
-          quantity: 7,
-          colours: [
-            { colourId: red!.id, quantity: 4 },
-            { colourId: white!.id, quantity: 3 },
-          ],
-        });
+      const res = await api.mutate('post', `/api/vehicles/${created.body.vehicle.id}/restock`, admin).send({
+        quantity: 7,
+        colours: [
+          { colourId: red!.id, quantity: 4 },
+          { colourId: white!.id, quantity: 3 },
+        ],
+      });
 
       expect(res.status).toBe(200);
       expect(res.body.vehicle.quantity).toBe(7);
@@ -289,15 +287,13 @@ describe('colour variants', () => {
       const { id, redId } = await camryInRedAndWhite(1, 4);
       const civic = await add({ ...buildVehicle({ make: 'Honda', model: 'Civic', quantity: 1 }), colour: RED });
 
-      const res = await api
-        .mutate('post', `/api/vehicles/${id}/restock`, admin)
-        .send({
-          quantity: 2,
-          colours: [
-            { colourId: redId, quantity: 1 },
-            { colourId: civic.body.vehicle.colours[0].id, quantity: 1 },
-          ],
-        });
+      const res = await api.mutate('post', `/api/vehicles/${id}/restock`, admin).send({
+        quantity: 2,
+        colours: [
+          { colourId: redId, quantity: 1 },
+          { colourId: civic.body.vehicle.colours[0].id, quantity: 1 },
+        ],
+      });
 
       expect(res.status).toBe(400);
       expect((await api.vehicles.findById(id))!.quantity).toBe(5);

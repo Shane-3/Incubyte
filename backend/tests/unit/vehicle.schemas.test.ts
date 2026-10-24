@@ -179,7 +179,16 @@ describe('purchaseSchema and restockSchema', () => {
 
     it.each([
       ['quantity', { quantity: 9, colours: [{ colourId, quantity: 2 }] }],
-      ['colours.1.colourId', { quantity: 2, colours: [{ colourId, quantity: 1 }, { colourId, quantity: 1 }] }],
+      [
+        'colours.1.colourId',
+        {
+          quantity: 2,
+          colours: [
+            { colourId, quantity: 1 },
+            { colourId, quantity: 1 },
+          ],
+        },
+      ],
       ['colours.0.quantity', { quantity: 1, colours: [{ colourId, quantity: -1 }] }],
       ['colours.0.colourId', { quantity: 1, colours: [{ colourId: 'red', quantity: 1 }] }],
       ['colours', { quantity: 1, colourId, colours: [{ colourId, quantity: 1 }] }],

@@ -38,12 +38,7 @@ export class StockChangeService {
       case 'purchase':
         return this.purchase(tx, current, change);
       case 'restock':
-        return this.stock.adjustColour(
-          tx,
-          current.id,
-          this.colourToStock(current, change.colourId).id,
-          change.quantity,
-        );
+        return this.restock(tx, current, change);
       case 'set':
         return this.set(tx, current, change);
       case 'receive':
@@ -79,6 +74,19 @@ export class StockChangeService {
       ]);
     }
     return this.stock.setStock(tx, current.id, only.id, change.quantity, change.fields);
+  }
+
+  /** One colour, or several with their own units; every colour is checked before any stock moves. */
+  private async restock(tx: Queryable, current: Vehicle, change: Change<'restock'>): Promise<Vehicle> {
+    const plan = change.colours
+      ? change.colours.map(({ colourId, quantity }) => ({ colour: this.colourOf(current, colourId), quantity }))
+      : [{ colour: this.colourToStock(current, change.colourId), quantity: change.quantity }];
+
+    let vehicle = current;
+    for (const { colour, quantity } of plan) {
+      if (quantity > 0) vehicle = await this.stock.adjustColour(tx, current.id, colour.id, quantity);
+    }
+    return vehicle;
   }
 
   /** Each colour is matched by name (case-insensitive) or created, then gets its units; all in this one change. */
