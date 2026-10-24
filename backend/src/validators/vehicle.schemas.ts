@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CATEGORIES, type Category, SORT_FIELDS } from '../types/vehicle';
+import { CATEGORIES, type Category, SORT_FIELDS, STOCK_STATUSES } from '../types/vehicle';
 
 export const MAX_PRICE = 99_999_999.99;
 export const MAX_QUANTITY = 100_000;
@@ -70,7 +70,7 @@ export const searchQuerySchema = z
     category: optionalQuery(category),
     minPrice: optionalQuery(queryPrice),
     maxPrice: optionalQuery(queryPrice),
-    stock: optionalQuery(z.never()),
+    stock: optionalQuery(z.enum(STOCK_STATUSES)),
     sort: z.enum(SORT_FIELDS).default('make'),
     order: z.enum(['asc', 'desc']).default('asc'),
     limit: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(25),

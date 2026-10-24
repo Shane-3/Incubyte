@@ -2,6 +2,7 @@ import { VehicleNotFoundError } from '../errors';
 import type { IVehicleRepository } from '../repositories/vehicle.repository';
 import type { StockChangeService } from './stock-change.service';
 import type {
+  InventoryStats,
   ListOptions,
   NewVehicle,
   Page,
@@ -31,6 +32,10 @@ export class VehicleService {
 
   search(filters: VehicleFilters, options: ListOptions, viewerId: string): Promise<Page<VehicleView>> {
     return this.vehicles.search(filters, options, viewerId);
+  }
+
+  stats(): Promise<InventoryStats> {
+    return this.vehicles.stats();
   }
 
   async update(id: string, changes: VehicleChanges): Promise<Vehicle> {

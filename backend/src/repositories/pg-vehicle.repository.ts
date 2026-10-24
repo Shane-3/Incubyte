@@ -64,7 +64,7 @@ function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, (ch) => `\\${ch}`);
 }
 
-function whereClause(filters: VehicleFilters): { sql: string; params: unknown[] } {
+function whereClause(filters: VehicleFilters, lowStockThreshold: number): { sql: string; params: unknown[] } {
   const conditions: string[] = [];
   const params: unknown[] = [];
   const add = (condition: (placeholder: string) => string, value: unknown) => {
@@ -77,6 +77,9 @@ function whereClause(filters: VehicleFilters): { sql: string; params: unknown[] 
   if (filters.category !== undefined) add((p) => `lower(category) = lower(${p})`, filters.category);
   if (filters.minPrice !== undefined) add((p) => `price >= ${p}`, filters.minPrice);
   if (filters.maxPrice !== undefined) add((p) => `price <= ${p}`, filters.maxPrice);
+  if (filters.stock === 'out') conditions.push('quantity = 0');
+  if (filters.stock === 'in') conditions.push('quantity > 0');
+  if (filters.stock === 'low') add((p) => `quantity BETWEEN 1 AND ${p}`, lowStockThreshold);
 
   return { sql: conditions.length ? `WHERE ${conditions.join(' AND ')}` : '', params };
 }
@@ -88,7 +91,29 @@ export class PgVehicleRepository implements IVehicleRepository {
   ) {}
 
   async stats(): Promise<InventoryStats> {
-    throw new Error('Not implemented');
+    const { rows } = await this.pool.query<{
+      models: number;
+      units: number;
+      inventory_value: string;
+      out_of_stock: number;
+      low_stock: number;
+    }>(
+      `SELECT count(*)::int AS models,
+              COALESCE(sum(quantity), 0)::int AS units,
+              COALESCE(sum(price * quantity), 0) AS inventory_value,
+              count(*) FILTER (WHERE quantity = 0)::int AS out_of_stock,
+              count(*) FILTER (WHERE quantity BETWEEN 1 AND $1)::int AS low_stock
+       FROM vehicles`,
+      [this.lowStockThreshold],
+    );
+    const row = rows[0]!;
+    return {
+      models: row.models,
+      units: row.units,
+      inventoryValue: Number(row.inventory_value),
+      outOfStock: row.out_of_stock,
+      lowStock: row.low_stock,
+    };
   }
 
   async create({ make, model, category, price, quantity }: NewVehicle): Promise<Vehicle> {
@@ -106,7 +131,7 @@ export class PgVehicleRepository implements IVehicleRepository {
   }
 
   async search(filters: VehicleFilters, options: ListOptions, viewerId?: string): Promise<Page<VehicleView>> {
-    const where = whereClause(filters);
+    const where = whereClause(filters, this.lowStockThreshold);
     const direction = options.order === 'desc' ? 'DESC' : 'ASC';
     const viewerAt = where.params.length + 1;
 

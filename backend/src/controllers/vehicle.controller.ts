@@ -16,6 +16,10 @@ export function createVehicleController(vehicles: VehicleService, forecasts: For
       res.json(await forecasts.report());
     },
 
+    async stats(_req: Request, res: Response) {
+      res.json(await vehicles.stats());
+    },
+
     async create(req: Request, res: Response) {
       const vehicle = await vehicles.create(req.body as CreateVehicleBody);
       res.status(201).json({ vehicle });
