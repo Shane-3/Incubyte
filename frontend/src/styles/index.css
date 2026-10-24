@@ -1,0 +1,127 @@
+@import 'tailwindcss';
+
+/* Design tokens (design.md 6.1). Components only use these, never raw colours. */
+:root {
+  --page: #f6f6f4;
+  --surface: #ffffff;
+  --surface-hover: #f1f1ee;
+  --border: #e5e5e1;
+  --border-strong: #cfcfca;
+  --text: #17181a;
+  --muted: #6b6e74;
+  --accent: #0f6e73;
+  --accent-hover: #0c5a5e;
+  --on-accent: #ffffff;
+  --in-stock: #1b7f4b;
+  --low: #a86400;
+  --out: #b3261e;
+  --overlay: rgb(14 15 17 / 0.32);
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --page: #0e0f11;
+  --surface: #16181b;
+  --surface-hover: #1d2024;
+  --border: #26292e;
+  --border-strong: #363a40;
+  --text: #ececea;
+  --muted: #8d9096;
+  --accent: #2fa3a8;
+  --accent-hover: #46b5ba;
+  /* White on the dark-mode accent fails AA, so accent buttons use the page colour for text. */
+  --on-accent: #0e0f11;
+  --in-stock: #4bc187;
+  --low: #e0a03a;
+  --out: #f0736b;
+  --overlay: rgb(0 0 0 / 0.55);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --page: #0e0f11;
+    --surface: #16181b;
+    --surface-hover: #1d2024;
+    --border: #26292e;
+    --border-strong: #363a40;
+    --text: #ececea;
+    --muted: #8d9096;
+    --accent: #2fa3a8;
+    --accent-hover: #46b5ba;
+    --on-accent: #0e0f11;
+    --in-stock: #4bc187;
+    --low: #e0a03a;
+    --out: #f0736b;
+    --overlay: rgb(0 0 0 / 0.55);
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  /* Drop Tailwind's default palette: only the tokens above exist. */
+  --color-*: initial;
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-on-accent: var(--on-accent);
+  --color-in-stock: var(--in-stock);
+  --color-low: var(--low);
+  --color-out: var(--out);
+  --color-overlay: var(--overlay);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --radius-control: 6px;
+  --radius-panel: 8px;
+  --radius-drawer: 12px;
+
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 18px;
+  --text-base: 14px;
+  --text-base--line-height: 20px;
+  --text-lg: 16px;
+  --text-lg--line-height: 24px;
+  --text-xl: 20px;
+  --text-xl--line-height: 28px;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 32px;
+
+  --shadow-float: 0 8px 24px rgb(0 0 0 / 0.12), 0 1px 2px rgb(0 0 0 / 0.08);
+}
+
+@layer base {
+  html,
+  body {
+    background: var(--page);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 20px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0ms !important;
+      animation-duration: 0ms !important;
+    }
+  }
+}
