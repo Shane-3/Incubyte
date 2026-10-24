@@ -1,13 +1,14 @@
+import bcrypt from 'bcrypt';
 import type { IPasswordHasher } from './password-hasher';
 
 export class BcryptPasswordHasher implements IPasswordHasher {
   constructor(private readonly rounds: number) {}
 
-  async hash(_plain: string): Promise<string> {
-    throw new Error('Not implemented');
+  hash(plain: string): Promise<string> {
+    return bcrypt.hash(plain, this.rounds);
   }
 
-  async compare(_plain: string, _hash: string): Promise<boolean> {
-    throw new Error('Not implemented');
+  compare(plain: string, hash: string): Promise<boolean> {
+    return bcrypt.compare(plain, hash);
   }
 }
