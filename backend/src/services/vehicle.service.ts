@@ -1,7 +1,7 @@
 import { VehicleNotFoundError } from '../errors';
 import type { IVehicleRepository } from '../repositories/vehicle.repository';
 import type { StockChangeService } from './stock-change.service';
-import type { ListOptions, NewVehicle, Page, Vehicle, VehicleChanges, VehicleFilters } from '../types/vehicle';
+import type { ListOptions, NewVehicle, Page, Vehicle, VehicleChanges, VehicleFilters, VehicleView } from '../types/vehicle';
 
 export class VehicleService {
   constructor(
@@ -21,8 +21,8 @@ export class VehicleService {
     return this.vehicles.create(input);
   }
 
-  search(filters: VehicleFilters, options: ListOptions): Promise<Page<Vehicle>> {
-    return this.vehicles.search(filters, options);
+  search(filters: VehicleFilters, options: ListOptions, viewerId: string): Promise<Page<VehicleView>> {
+    return this.vehicles.search(filters, options, viewerId);
   }
 
   async update(id: string, changes: VehicleChanges): Promise<Vehicle> {

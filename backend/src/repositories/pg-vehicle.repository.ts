@@ -9,6 +9,7 @@ import type {
   Vehicle,
   VehicleChanges,
   VehicleFilters,
+  VehicleView,
 } from '../types/vehicle';
 import type { IVehicleRepository } from './vehicle.repository';
 
@@ -96,21 +97,27 @@ export class PgVehicleRepository implements IVehicleRepository {
     return rows[0] ? toVehicle(rows[0]) : null;
   }
 
-  async search(filters: VehicleFilters, options: ListOptions): Promise<Page<Vehicle>> {
+  async search(filters: VehicleFilters, options: ListOptions, viewerId?: string): Promise<Page<VehicleView>> {
     const where = whereClause(filters);
     const direction = options.order === 'desc' ? 'DESC' : 'ASC';
-    const limitAt = where.params.length + 1;
+    const viewerAt = where.params.length + 1;
 
     const [page, total] = await Promise.all([
-      this.pool.query<VehicleRow>(
-        `SELECT ${COLUMNS} FROM vehicles ${where.sql}
+      this.pool.query<VehicleRow & { is_watching: boolean }>(
+        `SELECT ${COLUMNS},
+           EXISTS (SELECT 1 FROM watches w WHERE w.vehicle_id = vehicles.id AND w.user_id = $${viewerAt}::uuid)
+             AS is_watching
+         FROM vehicles ${where.sql}
          ORDER BY ${SORT_COLUMNS[options.sort]} ${direction}, id ASC
-         LIMIT $${limitAt} OFFSET $${limitAt + 1}`,
-        [...where.params, options.limit, options.offset],
+         LIMIT $${viewerAt + 1} OFFSET $${viewerAt + 2}`,
+        [...where.params, viewerId ?? null, options.limit, options.offset],
       ),
       this.pool.query<{ count: string }>(`SELECT count(*) FROM vehicles ${where.sql}`, where.params),
     ]);
-    return { data: page.rows.map(toVehicle), count: Number(total.rows[0]!.count) };
+    return {
+      data: page.rows.map((row) => ({ ...toVehicle(row), isWatching: row.is_watching })),
+      count: Number(total.rows[0]!.count),
+    };
   }
 
   async update(id: string, changes: VehicleChanges): Promise<Vehicle | null> {

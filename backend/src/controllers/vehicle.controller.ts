@@ -21,9 +21,9 @@ export function createVehicleController(vehicles: VehicleService, forecasts: For
       res.status(201).json({ vehicle });
     },
 
-    async search(_req: Request, res: Response) {
+    async search(req: Request, res: Response) {
       const { sort, order, limit, offset, ...filters } = res.locals.query as SearchQuery;
-      res.json(await vehicles.search(filters, { sort, order, limit, offset }));
+      res.json(await vehicles.search(filters, { sort, order, limit, offset }, req.user!.id));
     },
 
     async update(req: Request, res: Response) {

@@ -12,6 +12,9 @@ export interface Vehicle {
   updatedAt: Date;
 }
 
+/** A vehicle as one signed-in user sees it in lists. */
+export type VehicleView = Vehicle & { isWatching: boolean };
+
 export type NewVehicle = Pick<Vehicle, 'make' | 'model' | 'category' | 'price' | 'quantity'>;
 export type VehicleChanges = Partial<NewVehicle>;
 

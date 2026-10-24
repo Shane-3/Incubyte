@@ -1,25 +1,87 @@
 import type { Pool } from 'pg';
 import type { Queryable } from '../db/transaction';
-import type { AdminAlert, AdminAlertType, InboxOptions, NotificationView } from '../types/notification';
+import { isUuid } from '../db/errors';
+import type {
+  AdminAlert,
+  AdminAlertType,
+  InboxOptions,
+  NotificationType,
+  NotificationView,
+} from '../types/notification';
 import type { INotificationRepository } from './notification.repository';
+
+interface InboxRow {
+  id: string;
+  type: NotificationType;
+  vehicle_id: string;
+  make: string;
+  model: string;
+  quantity: number;
+  read_at: Date | null;
+  resolved_at: Date | null;
+  created_at: Date;
+}
+
+const INBOX_COLUMNS =
+  'n.id, n.type, n.vehicle_id, v.make, v.model, n.quantity, n.read_at, n.resolved_at, n.created_at';
+
+function toView(row: InboxRow): NotificationView {
+  return {
+    id: row.id,
+    type: row.type,
+    vehicle: { id: row.vehicle_id, make: row.make, model: row.model },
+    quantity: row.quantity,
+    readAt: row.read_at,
+    resolvedAt: row.resolved_at,
+    createdAt: row.created_at,
+  };
+}
 
 export class PgNotificationRepository implements INotificationRepository {
   constructor(private readonly pool: Pool) {}
 
-  async listFor(_recipientId: string, _options: InboxOptions): Promise<NotificationView[]> {
-    throw new Error('Not implemented');
+  // Every inbox query filters on recipient_id from the verified session, so another user's ids simply match nothing.
+
+  async listFor(recipientId: string, { unreadOnly, limit }: InboxOptions): Promise<NotificationView[]> {
+    const { rows } = await this.pool.query<InboxRow>(
+      `SELECT ${INBOX_COLUMNS}
+       FROM notifications n JOIN vehicles v ON v.id = n.vehicle_id
+       WHERE n.recipient_id = $1 AND ($2::boolean = false OR n.read_at IS NULL)
+       ORDER BY n.created_at DESC, n.id
+       LIMIT $3`,
+      [recipientId, unreadOnly, limit],
+    );
+    return rows.map(toView);
   }
 
-  async unreadCount(_recipientId: string): Promise<number> {
-    throw new Error('Not implemented');
+  async unreadCount(recipientId: string): Promise<number> {
+    const { rows } = await this.pool.query<{ n: number }>(
+      'SELECT count(*)::int AS n FROM notifications WHERE recipient_id = $1 AND read_at IS NULL',
+      [recipientId],
+    );
+    return rows[0]!.n;
   }
 
-  async markRead(_recipientId: string, _notificationId: string): Promise<NotificationView | null> {
-    throw new Error('Not implemented');
+  async markRead(recipientId: string, notificationId: string): Promise<NotificationView | null> {
+    if (!isUuid(notificationId)) return null;
+    const { rows } = await this.pool.query<InboxRow>(
+      `WITH marked AS (
+         UPDATE notifications SET read_at = COALESCE(read_at, now())
+         WHERE id = $1 AND recipient_id = $2
+         RETURNING *
+       )
+       SELECT ${INBOX_COLUMNS} FROM marked n JOIN vehicles v ON v.id = n.vehicle_id`,
+      [notificationId, recipientId],
+    );
+    return rows[0] ? toView(rows[0]) : null;
   }
 
-  async markAllRead(_recipientId: string): Promise<number> {
-    throw new Error('Not implemented');
+  async markAllRead(recipientId: string): Promise<number> {
+    const { rowCount } = await this.pool.query(
+      'UPDATE notifications SET read_at = now() WHERE recipient_id = $1 AND read_at IS NULL',
+      [recipientId],
+    );
+    return rowCount ?? 0;
   }
 
   async notifyAdmins(tx: Queryable, { type, vehicleId, quantity }: AdminAlert): Promise<void> {
