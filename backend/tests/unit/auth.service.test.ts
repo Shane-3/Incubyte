@@ -1,5 +1,5 @@
 import { AuthService } from '../../src/services/auth.service';
-import { EmailTakenError } from '../../src/errors';
+import { EmailTakenError, InvalidCredentialsError } from '../../src/errors';
 import { FakePasswordHasher, FakeTokenService, InMemoryUserRepository } from '../helpers/fakes';
 
 function setup() {
@@ -59,5 +59,64 @@ describe('AuthService.register', () => {
     await expect(
       service.register({ ...priya, email: 'PRIYA.NAIR@example.com' }),
     ).rejects.toBeInstanceOf(EmailTakenError);
+  });
+});
+
+describe('AuthService.login', () => {
+  it('returns the public user and a signed token for valid credentials', async () => {
+    const { service } = setup();
+    const registered = await service.register(priya);
+
+    const result = await service.login({ email: priya.email, password: priya.password });
+
+    expect(result.user).toEqual(registered);
+    expect(result.token).toBe(`token:${registered.id}:user`);
+  });
+
+  it('matches the email case-insensitively', async () => {
+    const { service } = setup();
+    await service.register(priya);
+
+    const result = await service.login({ email: ' PRIYA.NAIR@example.com', password: priya.password });
+
+    expect(result.user.email).toBe(priya.email);
+  });
+
+  it('carries the admin role into the token for admins', async () => {
+    const { users, service } = setup();
+    const admin = users.seed({ email: 'ops@example.com', role: 'admin', passwordHash: 'hashed:Adm1nPass!' });
+
+    const result = await service.login({ email: 'ops@example.com', password: 'Adm1nPass!' });
+
+    expect(result.token).toBe(`token:${admin.id}:admin`);
+  });
+
+  it('rejects a wrong password with InvalidCredentialsError', async () => {
+    const { service } = setup();
+    await service.register(priya);
+
+    await expect(
+      service.login({ email: priya.email, password: 'wrong-password' }),
+    ).rejects.toBeInstanceOf(InvalidCredentialsError);
+  });
+
+  it('rejects an unknown email with the same error as a wrong password', async () => {
+    const { service } = setup();
+    await service.register(priya);
+
+    const unknown = service.login({ email: 'nobody@example.com', password: priya.password }).catch((e) => e);
+    const wrong = service.login({ email: priya.email, password: 'wrong-password' }).catch((e) => e);
+
+    const [unknownErr, wrongErr] = await Promise.all([unknown, wrong]);
+    expect(unknownErr).toBeInstanceOf(InvalidCredentialsError);
+    expect(unknownErr.message).toBe(wrongErr.message);
+  });
+
+  it('still runs a password compare for an unknown email, so timing does not reveal accounts', async () => {
+    const { hasher, service } = setup();
+
+    await service.login({ email: 'nobody@example.com', password: 'whatever1' }).catch(() => undefined);
+
+    expect(hasher.compareCalls).toHaveLength(1);
   });
 });

@@ -10,6 +10,16 @@ export interface RegisterInput {
   password: string;
 }
 
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface LoginResult {
+  user: PublicUser;
+  token: string;
+}
+
 export class AuthService {
   constructor(
     private readonly users: IUserRepository,
@@ -30,6 +40,10 @@ export class AuthService {
       role: 'user',
     });
     return toPublicUser(user);
+  }
+
+  async login(_input: LoginInput): Promise<LoginResult> {
+    throw new Error('Not implemented');
   }
 }
 

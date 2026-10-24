@@ -25,3 +25,12 @@ export class EmailTakenError extends AppError {
     super('Email is already registered');
   }
 }
+
+export class InvalidCredentialsError extends AppError {
+  readonly status = 401;
+  readonly code = 'UNAUTHENTICATED';
+
+  constructor() {
+    super('Invalid email or password');
+  }
+}
