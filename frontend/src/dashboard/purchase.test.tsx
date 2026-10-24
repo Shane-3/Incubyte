@@ -34,7 +34,7 @@ describe('purchase', () => {
     expect(within(dialog).getByText('$56,800')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Confirm purchase' }));
 
-    expect(api.vehicles.purchase).toHaveBeenCalledWith('v-camry', 2);
+    expect(api.vehicles.purchase).toHaveBeenCalledWith('v-camry', 2, 'v-camry-standard');
     expect(await screen.findByText('Purchased 2 × Toyota Camry')).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).toBeNull();
     await waitFor(() => expect(api.vehicles.search.mock.calls.length).toBeGreaterThan(1));

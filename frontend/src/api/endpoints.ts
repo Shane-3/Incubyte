@@ -1,5 +1,16 @@
 import type { ApiClient } from './client';
-import type { ForecastReport, Inbox, InventoryStats, Page, User, Vehicle, VehicleInput, VehicleQuery } from './types';
+import type {
+  CreateResult,
+  ForecastReport,
+  Inbox,
+  InventoryStats,
+  NewVehicleInput,
+  Page,
+  User,
+  Vehicle,
+  VehicleInput,
+  VehicleQuery,
+} from './types';
 
 /** Typed wrappers over the REST API. Components reach these through useApi(), so tests can swap in fakes. */
 export function createEndpoints(client: ApiClient) {
@@ -18,14 +29,15 @@ export function createEndpoints(client: ApiClient) {
       search: (query: VehicleQuery) => client.get<Page<Vehicle>>('/vehicles/search', { ...query }),
       stats: () => client.get<InventoryStats>('/vehicles/stats'),
       forecast: () => client.get<ForecastReport>('/vehicles/forecast'),
-      create: (input: VehicleInput) => client.post<{ vehicle: Vehicle }>('/vehicles', input).then((r) => r.vehicle),
+      /** A make + model that already exists gets the colour (or its units) added: merged is then true. */
+      create: (input: NewVehicleInput) => client.post<CreateResult>('/vehicles', input),
       update: (id: string, changes: Partial<VehicleInput>) =>
         client.put<{ vehicle: Vehicle }>(`/vehicles/${id}`, changes).then((r) => r.vehicle),
       remove: (id: string) => client.del<void>(`/vehicles/${id}`),
-      purchase: (id: string, quantity: number) =>
-        client.post<{ vehicle: Vehicle }>(`/vehicles/${id}/purchase`, { quantity }).then((r) => r.vehicle),
-      restock: (id: string, quantity: number) =>
-        client.post<{ vehicle: Vehicle }>(`/vehicles/${id}/restock`, { quantity }).then((r) => r.vehicle),
+      purchase: (id: string, quantity: number, colourId: string) =>
+        client.post<{ vehicle: Vehicle }>(`/vehicles/${id}/purchase`, { quantity, colourId }).then((r) => r.vehicle),
+      restock: (id: string, quantity: number, colourId: string) =>
+        client.post<{ vehicle: Vehicle }>(`/vehicles/${id}/restock`, { quantity, colourId }).then((r) => r.vehicle),
       watch: (id: string) => client.post<{ watching: boolean }>(`/vehicles/${id}/watch`),
       unwatch: (id: string) => client.del<void>(`/vehicles/${id}/watch`),
     },

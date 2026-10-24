@@ -32,7 +32,7 @@ async function openRowAction(user: ReturnType<typeof renderApp>['user'], name: s
 describe('add vehicle', () => {
   it('adds a vehicle from the drawer', async () => {
     const api = apiFor();
-    api.vehicles.create.mockResolvedValue(rav4);
+    api.vehicles.create.mockResolvedValue({ vehicle: rav4, merged: false });
     const { user } = renderApp({ api });
 
     await user.click(await screen.findByRole('button', { name: 'Add vehicle' }));
@@ -177,7 +177,7 @@ describe('restock (admins)', () => {
     expect(quantity).toHaveAccessibleDescription('Suggested: 16 (covers 30 days of sales)');
     await user.click(within(drawer).getByRole('button', { name: 'Restock' }));
 
-    expect(api.vehicles.restock).toHaveBeenCalledWith('v-rav4', 16);
+    expect(api.vehicles.restock).toHaveBeenCalledWith('v-rav4', 16, 'v-rav4-standard');
     expect(await screen.findByText('Restocked Toyota RAV4: 18 in stock')).toBeInTheDocument();
   });
 

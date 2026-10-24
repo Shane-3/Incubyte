@@ -9,18 +9,30 @@ export type FakeApi = Fake<Api>;
 export const priya: User = { id: 'u-priya', name: 'Priya Nair', email: 'priya.nair@example.com', role: 'user' };
 export const dana: User = { id: 'u-dana', name: 'Dana Okafor', email: 'dana.okafor@example.com', role: 'admin' };
 
+/**
+ * A vehicle fixture. Unless colours are given, it has one Standard colour holding all its stock; with colours, the
+ * quantity is their sum, as the API guarantees.
+ */
 export function vehicle(overrides: Partial<Vehicle> = {}): Vehicle {
+  const id = overrides.id ?? 'v-camry';
+  const make = overrides.make ?? 'Toyota';
+  const model = overrides.model ?? 'Camry';
+  const colours = overrides.colours ?? [
+    { id: `${id}-standard`, name: 'Standard', hex: '#8a8f98', quantity: overrides.quantity ?? 6 },
+  ];
   return {
-    id: 'v-camry',
-    make: 'Toyota',
-    model: 'Camry',
+    id,
+    sku: `${make.slice(0, 3).toUpperCase()}-${model.replace(/[^A-Za-z0-9]/g, '').toUpperCase()}`,
+    make,
+    model,
     category: 'Sedan',
     price: 28400,
-    quantity: 6,
     createdAt: '2026-09-01T10:00:00Z',
     updatedAt: '2026-10-01T10:00:00Z',
     isWatching: false,
     ...overrides,
+    colours,
+    quantity: colours.reduce((sum, c) => sum + c.quantity, 0),
   };
 }
 
