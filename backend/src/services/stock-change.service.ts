@@ -2,7 +2,7 @@ import type { Queryable, ITransactionRunner } from '../db/transaction';
 import { OutOfStockError, VehicleNotFoundError } from '../errors';
 import type { IStockRepository } from '../repositories/stock.repository';
 import type { IStockChangeHandler, StockChange } from '../types/stock';
-import type { Vehicle } from '../types/vehicle';
+import type { Vehicle, VehicleChanges } from '../types/vehicle';
 
 /**
  * The single path for every change to a vehicle's quantity. The stock write, the purchase record and every
@@ -22,7 +22,7 @@ export class StockChangeService {
           ? await this.purchase(tx, vehicleId, change)
           : change.kind === 'restock'
             ? await this.restock(tx, vehicleId, change.quantity)
-            : await this.set();
+            : await this.set(tx, vehicleId, change.quantity, change.fields);
 
       for (const handler of this.handlers) {
         await handler.handle({ change, vehicle, before, after: vehicle.quantity }, tx);
@@ -47,8 +47,12 @@ export class StockChangeService {
     return { vehicle, before: vehicle.quantity + change.quantity };
   }
 
-  private async set(): Promise<{ vehicle: Vehicle; before: number }> {
-    throw new Error('Not implemented');
+  private async set(tx: Queryable, vehicleId: string, quantity: number, fields: VehicleChanges) {
+    const result = await this.stock.set(tx, vehicleId, quantity, fields);
+    if (!result) {
+      throw new VehicleNotFoundError();
+    }
+    return result;
   }
 
   private async restock(tx: Queryable, vehicleId: string, quantity: number) {
