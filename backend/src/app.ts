@@ -5,13 +5,14 @@ import { createAuthController } from './controllers/auth.controller';
 import { createNotificationController } from './controllers/notification.controller';
 import { createVehicleController } from './controllers/vehicle.controller';
 import type { ITransactionRunner } from './db/transaction';
-import type { Logger } from './logging/logger';
+import { jsonLogger, type Logger, silentLogger } from './logging/logger';
 import { BackInStockHandler } from './handlers/back-in-stock.handler';
 import { LowStockAlertHandler } from './handlers/low-stock-alert.handler';
 import { authenticate } from './middleware/authenticate';
 import { requireJsonBody, requireTrustedOrigin } from './middleware/csrf';
 import { errorHandler, notFound } from './middleware/error-handler';
 import { createRateLimiters, DEFAULT_RATE_LIMITS, type RateLimits } from './middleware/rate-limit';
+import { requestLog } from './middleware/request-log';
 import { requireRole } from './middleware/require-role';
 import { securityHeaders } from './middleware/security-headers';
 import type { INotificationRepository } from './repositories/notification.repository';
@@ -71,6 +72,8 @@ export function createApp(deps: AppDeps): Express {
   const { config } = deps;
   const app = express();
   app.disable('x-powered-by');
+  const logger = deps.logger ?? (config.env === 'test' ? silentLogger : jsonLogger());
+  app.use(requestLog(logger));
   // Only trust X-Forwarded-For when a known proxy sits in front, or clients could spoof their IP past the limits.
   app.set('trust proxy', config.trustProxy);
   const limiters = createRateLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS);
@@ -120,6 +123,6 @@ export function createApp(deps: AppDeps): Express {
   );
 
   app.use(notFound);
-  app.use(errorHandler(() => undefined));
+  app.use(errorHandler(logger));
   return app;
 }

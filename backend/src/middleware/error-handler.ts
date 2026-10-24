@@ -1,5 +1,6 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
 import { AppError, NotFoundError } from '../errors';
+import type { Logger } from '../logging/logger';
 
 interface BodyParserError {
   type: string;
@@ -13,8 +14,11 @@ export const notFound: RequestHandler = () => {
   throw new NotFoundError('Route not found');
 };
 
-/** Maps every error to the standard { error: { code, message, details? } } shape. Never leaks internals. */
-export function errorHandler(log: (err: unknown) => void): ErrorRequestHandler {
+/**
+ * Maps every error to the standard { error: { code, message, details? } } shape. Unexpected errors are logged in
+ * full against the request id, and the client gets only that id.
+ */
+export function errorHandler(logger: Logger): ErrorRequestHandler {
   return (err, _req, res, _next) => {
     if (err instanceof AppError) {
       res.status(err.status).json({
@@ -32,7 +36,12 @@ export function errorHandler(log: (err: unknown) => void): ErrorRequestHandler {
       return;
     }
 
-    log(err);
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Something went wrong' } });
+    const requestId = res.locals.requestId as string;
+    logger.error({
+      msg: 'unhandled error',
+      requestId,
+      error: err instanceof Error ? (err.stack ?? err.message) : String(err),
+    });
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Something went wrong', requestId } });
   };
 }

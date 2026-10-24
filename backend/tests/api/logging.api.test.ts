@@ -41,9 +41,10 @@ describe('request logging', () => {
   it('ignores a client-supplied request id', async () => {
     const { app } = setup();
 
-    const res = await request(app).get('/api/auth/me').set('X-Request-Id', 'forged\r\nSet-Cookie: x=1');
+    const res = await request(app).get('/api/auth/me').set('X-Request-Id', 'forged-by-client');
 
     expect(res.headers['x-request-id']).toMatch(UUID);
+    expect(res.headers['x-request-id']).not.toBe('forged-by-client');
   });
 
   it('logs successful requests at info with method, path, status, duration and user', async () => {
