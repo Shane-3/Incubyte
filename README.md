@@ -25,7 +25,7 @@ A full-stack inventory system for a car dealership, built test-first as a TDD ka
 | Everyone | **Colour variants**: every model (one auto-generated SKU, e.g. `TOY-CAMRY`) has paint colours with their own stock; open a vehicle to see it drawn in each colour |
 | Everyone | Add and edit vehicles from a side drawer, with several colours (each with its own units) in one go; adding a make + model that already exists adds the colours (or more units of them) to that model |
 | Everyone | **Notify me** on a sold-out vehicle; one in-app notice when it is back in stock |
-| Admins | Restock a colour (pre-filled with the forecast's suggestion; sold-out rows offer Restock directly) and delete (with a confirmation that names the vehicle) |
+| Admins | Restock several colours at once, each with its own units (the forecast's suggestion is shown; sold-out rows offer Restock directly) and delete (with a confirmation that names the vehicle) |
 | Admins | **Low-stock alerts** when a sale leaves 3 or fewer, and **sold-out alerts** at 0, de-duplicated and resolved automatically on restock |
 | Admins | **Stock-out forecast**: average daily sales over 30 days, days of stock left, an *At risk* flag at 7 days or fewer, and a suggested restock quantity |
 
@@ -93,8 +93,8 @@ Results on 2026-10-25:
 
 | Package | Test files | Tests | Statements | Branches | Functions | Lines |
 |---|---|---|---|---|---|---|
-| Backend | 32 | 459 passed | 98.0% | 90.2% | 99.6% | 99.3% |
-| Frontend | 10 | 112 passed | 90.9% | 86.8% | 88.8% | 93.1% |
+| Backend | 32 | 470 passed | 98.0% | 90.2% | 99.6% | 99.3% |
+| Frontend | 10 | 113 passed | 90.9% | 86.8% | 88.8% | 93.1% |
 
 What the backend suite covers:
 
@@ -125,7 +125,7 @@ All endpoints are JSON under `/api`. Errors share one shape: `{ "error": { "code
 | PUT | `/vehicles/:id` | signed in | quantity changes go through the stock pipeline |
 | DELETE | `/vehicles/:id` | admin | |
 | POST | `/vehicles/:id/purchase` | signed in | optional `{ quantity, colourId }` (quantity 1 to 10; without a colour, the best-stocked one); 409 when short |
-| POST | `/vehicles/:id/restock` | admin | `{ quantity, colourId }` (the colour may be omitted for single-colour models) |
+| POST | `/vehicles/:id/restock` | admin | `{ quantity, colourId }` (colour optional for single-colour models), or `{ quantity, colours: [{ colourId, quantity }] }` to restock several colours as one change |
 | GET | `/vehicles/forecast` | admin | |
 | POST / DELETE | `/vehicles/:id/watch` | signed in | only on sold-out vehicles; 50 per user |
 | GET | `/notifications` | signed in | own only; `unread`, `limit` |

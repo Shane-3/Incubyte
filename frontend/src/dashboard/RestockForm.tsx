@@ -111,33 +111,35 @@ export function RestockForm({ vehicle, suggested, windowDays = 30, onSubmit, onC
             <span>Units to add</span>
           </div>
           {vehicle.colours.map((c) => {
-            const describedBy = `restock-${c.id}-note`;
+            const noteId = `restock-${c.id}-stock`;
+            const errorId = `restock-${c.id}-error`;
             return (
-              <div key={c.id} className="grid grid-cols-[1rem_minmax(0,1fr)_6rem] items-start gap-3">
-                <span className="flex h-9 items-center">
-                  <Swatch hex={c.hex} size={16} soldOut={c.quantity === 0} />
-                </span>
-                <span className="flex h-9 min-w-0 flex-col justify-center">
+              <div key={c.id} className="grid grid-cols-[1rem_minmax(0,1fr)_6rem] items-center gap-x-3 gap-y-1">
+                <Swatch hex={c.hex} size={16} soldOut={c.quantity === 0} />
+                <span className="flex min-w-0 flex-col">
                   <span className="truncate text-base">{c.name}</span>
-                </span>
-                <span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    step={1}
-                    aria-label={`${c.name} units to add`}
-                    aria-describedby={describedBy}
-                    aria-invalid={errors[c.id] ? true : undefined}
-                    value={units[c.id] ?? ''}
-                    onChange={set(c.id)}
-                    placeholder="0"
-                    className="h-9 w-full rounded-control border border-border-strong bg-surface px-2.5 text-base text-text tabular-nums aria-invalid:border-out"
-                  />
-                  <span id={describedBy} className={`mt-1 block text-xs ${errors[c.id] ? 'text-out' : 'text-muted'}`}>
-                    {errors[c.id] ?? `${c.quantity} in stock`}
+                  <span id={noteId} className="text-xs text-muted tabular-nums">
+                    {c.quantity} in stock
                   </span>
                 </span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={1}
+                  aria-label={`${c.name} units to add`}
+                  aria-describedby={errors[c.id] ? errorId : noteId}
+                  aria-invalid={errors[c.id] ? true : undefined}
+                  value={units[c.id] ?? ''}
+                  onChange={set(c.id)}
+                  placeholder="0"
+                  className="h-9 w-full rounded-control border border-border-strong bg-surface px-2.5 text-base text-text tabular-nums aria-invalid:border-out"
+                />
+                {errors[c.id] && (
+                  <p id={errorId} className="col-start-3 text-xs text-out">
+                    {errors[c.id]}
+                  </p>
+                )}
               </div>
             );
           })}
