@@ -21,6 +21,7 @@ import { AuthService } from './services/auth.service';
 import type { IPasswordHasher } from './services/password-hasher';
 import type { ITokenService } from './services/token.service';
 import type { IStockChangeHandler } from './types/stock';
+import { ForecastService } from './services/forecast.service';
 import { StockChangeService } from './services/stock-change.service';
 import { VehicleService } from './services/vehicle.service';
 
@@ -68,9 +69,13 @@ export function createApp(deps: AppDeps): Express {
     deps.stockHandlers ?? [new LowStockAlertHandler(deps.notifications, config.lowStockThreshold)],
   );
   const vehicleService = new VehicleService(deps.vehicles, stockChanges);
+  const forecastService = new ForecastService(deps.sales, deps.clock ?? (() => new Date()), {
+    windowDays: config.forecastWindowDays,
+    atRiskDays: config.forecastAtRiskDays,
+  });
   app.use(
     '/api/vehicles',
-    vehicleRoutes(createVehicleController(vehicleService), {
+    vehicleRoutes(createVehicleController(vehicleService, forecastService), {
       authenticate: requireSession,
       adminOnly: requireRole(deps.users)('admin'),
     }),

@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import type { ForecastService } from '../services/forecast.service';
 import type { VehicleService } from '../services/vehicle.service';
 import type {
   CreateVehicleBody,
@@ -8,8 +9,12 @@ import type {
   UpdateVehicleBody,
 } from '../validators/vehicle.schemas';
 
-export function createVehicleController(vehicles: VehicleService) {
+export function createVehicleController(vehicles: VehicleService, forecasts: ForecastService) {
   return {
+    async forecast(_req: Request, res: Response) {
+      res.json(await forecasts.report());
+    },
+
     async create(req: Request, res: Response) {
       const vehicle = await vehicles.create(req.body as CreateVehicleBody);
       res.status(201).json({ vehicle });

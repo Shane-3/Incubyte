@@ -1,3 +1,5 @@
+import type { ISalesRepository } from '../repositories/sales.repository';
+
 export interface SalesSummary {
   vehicleId: string;
   quantity: number;
@@ -40,4 +42,26 @@ export function forecastVehicle({ vehicleId, quantity, unitsSold }: SalesSummary
     atRisk: daysOfStockLeft <= window.atRiskDays,
     suggestedRestock: Math.max(0, unitsSold - quantity),
   };
+}
+
+export interface ForecastReport extends ForecastWindow {
+  data: VehicleForecast[];
+}
+
+const DAY_MS = 86_400_000;
+
+/** Forecasts are computed on read from one aggregate query; nothing is stored. */
+export class ForecastService {
+  constructor(
+    private readonly sales: ISalesRepository,
+    private readonly clock: () => Date,
+    private readonly window: ForecastWindow,
+  ) {}
+
+  async report(): Promise<ForecastReport> {
+    const now = this.clock();
+    const from = new Date(now.getTime() - this.window.windowDays * DAY_MS);
+    const summaries = await this.sales.summarise(from, now);
+    return { data: summaries.map((s) => forecastVehicle(s, this.window)), ...this.window };
+  }
 }

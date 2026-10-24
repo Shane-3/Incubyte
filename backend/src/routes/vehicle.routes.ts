@@ -23,6 +23,7 @@ export function vehicleRoutes(controller: ReturnType<typeof createVehicleControl
   router.get('/', validateQuery(searchQuerySchema), controller.search);
   // Static paths are registered before /:id so they are never captured as an id.
   router.get('/search', validateQuery(searchQuerySchema), controller.search);
+  router.get('/forecast', guards.adminOnly, controller.forecast);
   router.post('/', validateBody(createVehicleSchema), controller.create);
   router.put('/:id', validateParams(vehicleIdSchema), validateBody(updateVehicleSchema), controller.update);
   router.post('/:id/purchase', validateParams(vehicleIdSchema), validateBody(purchaseSchema), controller.purchase);
