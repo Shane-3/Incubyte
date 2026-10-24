@@ -7,10 +7,10 @@ import { InMemoryUserRepository } from '../helpers/fakes';
 function setup() {
   const users = new InMemoryUserRepository();
   const guard = requireRole(users);
-  const next = vi.fn<NextFunction>();
+  const next = vi.fn();
   const run = (user?: { id: string; role: Role }) => {
     const req = { user } as Request;
-    return Promise.resolve(guard('admin')(req, {} as Response, next)).then(() => req);
+    return Promise.resolve(guard('admin')(req, {} as Response, next as NextFunction)).then(() => req);
   };
   return { users, next, run };
 }
