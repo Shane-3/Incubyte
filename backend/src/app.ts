@@ -25,6 +25,7 @@ import type { IStockChangeHandler } from './types/stock';
 import { ForecastService } from './services/forecast.service';
 import { StockChangeService } from './services/stock-change.service';
 import { VehicleService } from './services/vehicle.service';
+import { WatchService } from './services/watch.service';
 
 export type AppConfig = Pick<
   Config,
@@ -71,13 +72,14 @@ export function createApp(deps: AppDeps): Express {
     deps.stockHandlers ?? [new LowStockAlertHandler(deps.notifications, config.lowStockThreshold)],
   );
   const vehicleService = new VehicleService(deps.vehicles, stockChanges);
+  const watchService = new WatchService(deps.transactions, deps.watches, config.maxWatchesPerUser);
   const forecastService = new ForecastService(deps.sales, deps.clock ?? (() => new Date()), {
     windowDays: config.forecastWindowDays,
     atRiskDays: config.forecastAtRiskDays,
   });
   app.use(
     '/api/vehicles',
-    vehicleRoutes(createVehicleController(vehicleService, forecastService), {
+    vehicleRoutes(createVehicleController(vehicleService, forecastService, watchService), {
       authenticate: requireSession,
       adminOnly: requireRole(deps.users)('admin'),
     }),

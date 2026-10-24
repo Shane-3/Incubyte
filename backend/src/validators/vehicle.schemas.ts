@@ -86,6 +86,9 @@ export const restockSchema = z.strictObject({
   quantity: quantity.min(1, 'must be at least 1'),
 });
 
+/** For endpoints that take no body: anything sent is a client trying to set fields it does not own. */
+export const emptyBodySchema = z.strictObject({});
+
 export const vehicleIdSchema = z.strictObject({ id: z.uuid('must be a valid id') });
 
 export type CreateVehicleBody = z.infer<typeof createVehicleSchema>;

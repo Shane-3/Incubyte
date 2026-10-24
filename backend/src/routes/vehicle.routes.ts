@@ -3,6 +3,7 @@ import type { createVehicleController } from '../controllers/vehicle.controller'
 import { validateBody, validateParams, validateQuery } from '../middleware/validate';
 import {
   createVehicleSchema,
+  emptyBodySchema,
   purchaseSchema,
   restockSchema,
   searchQuerySchema,
@@ -34,6 +35,8 @@ export function vehicleRoutes(controller: ReturnType<typeof createVehicleControl
     validateBody(restockSchema),
     controller.restock,
   );
+  router.post('/:id/watch', validateParams(vehicleIdSchema), validateBody(emptyBodySchema), controller.watch);
+  router.delete('/:id/watch', validateParams(vehicleIdSchema), controller.unwatch);
   router.delete('/:id', guards.adminOnly, validateParams(vehicleIdSchema), controller.remove);
   return router;
 }

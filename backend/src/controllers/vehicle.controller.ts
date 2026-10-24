@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import type { ForecastService } from '../services/forecast.service';
 import type { VehicleService } from '../services/vehicle.service';
+import type { WatchService } from '../services/watch.service';
 import type {
   CreateVehicleBody,
   PurchaseBody,
@@ -9,7 +10,7 @@ import type {
   UpdateVehicleBody,
 } from '../validators/vehicle.schemas';
 
-export function createVehicleController(vehicles: VehicleService, forecasts: ForecastService) {
+export function createVehicleController(vehicles: VehicleService, forecasts: ForecastService, watches: WatchService) {
   return {
     async forecast(_req: Request, res: Response) {
       res.json(await forecasts.report());
@@ -41,6 +42,18 @@ export function createVehicleController(vehicles: VehicleService, forecasts: For
       const { id } = res.locals.params as { id: string };
       const { quantity } = req.body as RestockBody;
       res.json({ vehicle: await vehicles.restock(id, quantity) });
+    },
+
+    async watch(req: Request, res: Response) {
+      const { id } = res.locals.params as { id: string };
+      await watches.watch(req.user!.id, id);
+      res.json({ watching: true });
+    },
+
+    async unwatch(req: Request, res: Response) {
+      const { id } = res.locals.params as { id: string };
+      await watches.unwatch(req.user!.id, id);
+      res.status(204).end();
     },
 
     async remove(_req: Request, res: Response) {
