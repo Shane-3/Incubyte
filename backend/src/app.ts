@@ -11,6 +11,7 @@ import { requireRole } from './middleware/require-role';
 import { securityHeaders } from './middleware/security-headers';
 import type { ITransactionRunner } from './db/transaction';
 import type { INotificationRepository } from './repositories/notification.repository';
+import type { ISalesRepository } from './repositories/sales.repository';
 import type { IStockRepository } from './repositories/stock.repository';
 import type { IUserRepository } from './repositories/user.repository';
 import type { IVehicleRepository } from './repositories/vehicle.repository';
@@ -23,7 +24,10 @@ import type { IStockChangeHandler } from './types/stock';
 import { StockChangeService } from './services/stock-change.service';
 import { VehicleService } from './services/vehicle.service';
 
-export type AppConfig = Pick<Config, 'env' | 'corsOrigin' | 'jwtExpiresInSeconds' | 'lowStockThreshold'>;
+export type AppConfig = Pick<
+  Config,
+  'env' | 'corsOrigin' | 'jwtExpiresInSeconds' | 'lowStockThreshold' | 'forecastWindowDays' | 'forecastAtRiskDays'
+>;
 
 export interface AppDeps {
   users: IUserRepository;
@@ -35,6 +39,9 @@ export interface AppDeps {
   hasher: IPasswordHasher;
   tokens: ITokenService;
   notifications: INotificationRepository;
+  sales: ISalesRepository;
+  /** Injected so forecast tests control "now". */
+  clock?: () => Date;
   config: AppConfig;
   /** Receives unexpected errors. Defaults to console.error outside tests. */
   logError?: (err: unknown) => void;

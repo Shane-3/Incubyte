@@ -6,7 +6,15 @@ import { FakePasswordHasher, FakeTokenService, InMemoryUserRepository, unusedRep
 export const FRONTEND_ORIGIN = 'http://localhost:5173';
 
 export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
-  return { env: 'test', corsOrigin: FRONTEND_ORIGIN, jwtExpiresInSeconds: 3600, lowStockThreshold: 3, ...overrides };
+  return {
+    env: 'test',
+    corsOrigin: FRONTEND_ORIGIN,
+    jwtExpiresInSeconds: 3600,
+    lowStockThreshold: 3,
+    forecastWindowDays: 30,
+    forecastAtRiskDays: 7,
+    ...overrides,
+  };
 }
 
 export function buildTestApp(overrides: Partial<AppDeps> = {}) {
@@ -18,6 +26,7 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
     stock: unusedRepository('stock'),
     transactions: unusedRepository('transactions'),
     notifications: unusedRepository('notifications'),
+    sales: unusedRepository('sales'),
     hasher: new FakePasswordHasher(),
     tokens,
     config: testConfig(),

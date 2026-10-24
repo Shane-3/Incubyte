@@ -3,6 +3,7 @@ import request from 'supertest';
 import { type AppDeps, createApp } from '../../src/app';
 import { PgTransactionRunner } from '../../src/db/transaction';
 import { PgNotificationRepository } from '../../src/repositories/pg-notification.repository';
+import { PgSalesRepository } from '../../src/repositories/pg-sales.repository';
 import { PgStockRepository } from '../../src/repositories/pg-stock.repository';
 import { PgUserRepository } from '../../src/repositories/pg-user.repository';
 import { PgVehicleRepository } from '../../src/repositories/pg-vehicle.repository';
@@ -21,6 +22,7 @@ export function buildDbApp(pool: Pool, overrides: Partial<AppDeps> = {}) {
     stock: new PgStockRepository(),
     transactions: new PgTransactionRunner(pool),
     notifications: new PgNotificationRepository(pool),
+    sales: new PgSalesRepository(pool),
     hasher: new FakePasswordHasher(),
     tokens,
     config: testConfig(),

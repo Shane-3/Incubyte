@@ -5,6 +5,7 @@ import { loadConfig } from './config';
 import { PgUserRepository } from './repositories/pg-user.repository';
 import { PgVehicleRepository } from './repositories/pg-vehicle.repository';
 import { PgNotificationRepository } from './repositories/pg-notification.repository';
+import { PgSalesRepository } from './repositories/pg-sales.repository';
 import { PgStockRepository } from './repositories/pg-stock.repository';
 import { PgTransactionRunner } from './db/transaction';
 import { BcryptPasswordHasher } from './services/bcrypt-hasher';
@@ -25,6 +26,7 @@ const app = createApp({
   stock: new PgStockRepository(),
   transactions: new PgTransactionRunner(pool),
   notifications: new PgNotificationRepository(pool),
+  sales: new PgSalesRepository(pool),
   hasher: new BcryptPasswordHasher(config.bcryptRounds),
   tokens: new JwtTokenService({ secret: config.jwtSecret, expiresInSeconds: config.jwtExpiresInSeconds }),
   config,
