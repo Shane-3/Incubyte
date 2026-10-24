@@ -126,6 +126,44 @@ describe('edit vehicle', () => {
   });
 });
 
+describe('sold-out rows', () => {
+  const crv = vehicle({ id: 'v-crv', make: 'Honda', model: 'CR-V', category: 'SUV', price: 32450, quantity: 0 });
+
+  it('offer admins Restock instead of Notify me, next to a disabled Purchase', async () => {
+    const api = apiFor(dana, [camry, crv]);
+    const { user } = renderApp({ api });
+
+    const row = (await within(await screen.findByRole('table', { name: 'Vehicles' })).findByText('Honda CR-V')).closest(
+      'tr',
+    )!;
+    expect(within(row).queryByRole('button', { name: 'Notify me' })).toBeNull();
+    expect(within(row).getByRole('button', { name: 'Purchase' })).toBeDisabled();
+    await user.click(within(row).getByRole('button', { name: 'Restock' }));
+
+    expect(screen.getByRole('dialog', { name: 'Restock Honda CR-V' })).toBeInTheDocument();
+  });
+
+  it('keep Notify me for regular users, with no Restock button', async () => {
+    renderApp({ api: apiFor(priya, [crv]) });
+
+    const row = (await within(await screen.findByRole('table', { name: 'Vehicles' })).findByText('Honda CR-V')).closest(
+      'tr',
+    )!;
+    expect(within(row).getByRole('button', { name: 'Notify me' })).toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: 'Restock' })).toBeNull();
+  });
+
+  it('show no row-level Restock button for admins while there is stock', async () => {
+    renderApp({ api: apiFor(dana, [camry]) });
+
+    const row = (await within(await screen.findByRole('table', { name: 'Vehicles' })).findByText('Toyota Camry')).closest(
+      'tr',
+    )!;
+    expect(within(row).queryByRole('button', { name: 'Restock' })).toBeNull();
+    expect(within(row).getByRole('button', { name: 'Purchase' })).toBeEnabled();
+  });
+});
+
 describe('restock (admins)', () => {
   it('prefills the suggested quantity from the forecast', async () => {
     const api = apiFor(dana);
