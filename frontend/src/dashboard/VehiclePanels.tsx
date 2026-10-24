@@ -94,8 +94,8 @@ export function VehiclePanels({ panel, onClose, forecastById, windowDays }: Vehi
           suggested={suggestion || undefined}
           windowDays={windowDays}
           onCancel={onClose}
-          onSubmit={async (quantity, colourId) => {
-            const updated = await restock.mutateAsync({ id: vehicle.id, quantity, colourId });
+          onSubmit={async (colours) => {
+            const updated = await restock.mutateAsync({ id: vehicle.id, colours });
             toast.success(`Restocked ${name}: ${updated.quantity} in stock`);
             onClose();
           }}
