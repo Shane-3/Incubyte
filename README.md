@@ -21,14 +21,17 @@ A full-stack inventory system for a car dealership, built test-first as a TDD ka
 | For | Feature |
 |---|---|
 | Everyone | Register, sign in (session in an httpOnly cookie), browse a sortable, paginated table, filter by make, model, category, price range and stock status (filters live in the URL) |
-| Everyone | Buy a vehicle from a popover with quantity and total; **Purchase** is disabled when stock is 0 |
-| Everyone | Add and edit vehicles from a side drawer |
+| Everyone | Buy a vehicle in a chosen colour from a popover with quantity and total; **Purchase** is disabled when stock is 0 |
+| Everyone | **Colour variants**: every model (one auto-generated SKU, e.g. `TOY-CAMRY`) has paint colours with their own stock; open a vehicle to see it drawn in each colour |
+| Everyone | Add and edit vehicles from a side drawer; adding a make + model that already exists adds the colour (or more units of it) to that model |
 | Everyone | **Notify me** on a sold-out vehicle; one in-app notice when it is back in stock |
-| Admins | Restock (pre-filled with the forecast's suggestion) and delete (with a confirmation that names the vehicle) |
+| Admins | Restock a colour (pre-filled with the forecast's suggestion; sold-out rows offer Restock directly) and delete (with a confirmation that names the vehicle) |
 | Admins | **Low-stock alerts** when a sale leaves 3 or fewer, and **sold-out alerts** at 0, de-duplicated and resolved automatically on restock |
 | Admins | **Stock-out forecast**: average daily sales over 30 days, days of stock left, an *At risk* flag at 7 days or fewer, and a suggested restock quantity |
 
-Every stock change (purchase, restock, or an edit that changes quantity) runs through one transaction that writes the stock, records the sale and raises or resolves alerts together, so they can never disagree. Concurrent purchases of the last unit produce exactly one sale.
+Every stock change runs through one transaction: a purchase, a restock, an edit that changes quantity, or adding a colour. That transaction locks the model row, moves the colour's stock and the model total together, records the sale, and raises or resolves alerts, so none of these can ever disagree. Concurrent purchases of the last unit produce exactly one sale.
+
+Car pictures are built-in side-view illustrations for each body style (sedan, SUV, hatchback, pickup, coupe, convertible, van and electric), painted in each colour's hex. They are self-hosted SVG, so nothing is uploaded and the strict CSP still holds.
 
 ## Screenshots
 
@@ -56,7 +59,8 @@ npm install
 npm run db:create           # creates both databases if they don't exist
 npm run migrate             # dev database (tests migrate the test database themselves)
 npm run seed:admin          # admin from ADMIN_EMAIL / ADMIN_PASSWORD in .env
-npm run seed:demo           # optional: 32 realistic vehicles and 30 days of sales
+npm run seed:demo           # optional: 32 realistic vehicles in factory colours and 30 days of sales
+                            # (npm run seed:demo -- --replace swaps an existing lot; accounts are kept)
 npm run dev
 ```
 
@@ -87,8 +91,8 @@ Results on 2026-10-25:
 
 | Package | Test files | Tests | Statements | Branches | Functions | Lines |
 |---|---|---|---|---|---|---|
-| Backend | 30 | 388 passed | 98.2% | 91.0% | 99.5% | 99.7% |
-| Frontend | 9 | 92 passed | 89.5% | 86.9% | 85.3% | 92.3% |
+| Backend | 32 | 445 passed | 98.0% | 90.2% | 99.6% | 99.3% |
+| Frontend | 10 | 104 passed | 90.9% | 86.8% | 88.8% | 93.1% |
 
 What the backend suite covers:
 
@@ -113,13 +117,13 @@ All endpoints are JSON under `/api`. Errors share one shape: `{ "error": { "code
 | POST | `/auth/login` | anyone | sets the session cookie |
 | POST | `/auth/logout` | signed in | clears it |
 | GET | `/auth/me` | signed in | restores the session in the SPA |
-| GET | `/vehicles`, `/vehicles/search` | signed in | `make`, `model`, `category`, `minPrice`, `maxPrice`, `stock`, `sort`, `order`, `limit`, `offset` |
+| GET | `/vehicles`, `/vehicles/search` | signed in | `make`, `model`, `colour`, `category`, `minPrice`, `maxPrice`, `stock`, `sort`, `order`, `limit`, `offset`; each vehicle has `sku` and `colours` |
 | GET | `/vehicles/stats` | signed in | totals for the KPI strip |
-| POST | `/vehicles` | signed in | |
+| POST | `/vehicles` | signed in | optional `colour { name, hex }`; an existing make + model merges (200, `merged: true`), 409 `MODEL_EXISTS` if price or category differ |
 | PUT | `/vehicles/:id` | signed in | quantity changes go through the stock pipeline |
 | DELETE | `/vehicles/:id` | admin | |
-| POST | `/vehicles/:id/purchase` | signed in | optional `{ quantity }` 1 to 10; 409 when short |
-| POST | `/vehicles/:id/restock` | admin | `{ quantity }` |
+| POST | `/vehicles/:id/purchase` | signed in | optional `{ quantity, colourId }` (quantity 1 to 10; without a colour, the best-stocked one); 409 when short |
+| POST | `/vehicles/:id/restock` | admin | `{ quantity, colourId }` (the colour may be omitted for single-colour models) |
 | GET | `/vehicles/forecast` | admin | |
 | POST / DELETE | `/vehicles/:id/watch` | signed in | only on sold-out vehicles; 50 per user |
 | GET | `/notifications` | signed in | own only; `unread`, `limit` |
