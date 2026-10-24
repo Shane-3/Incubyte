@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import { createApp } from './app';
 import { loadConfig } from './config';
 import { PgUserRepository } from './repositories/pg-user.repository';
+import { PgWatchRepository } from './repositories/pg-watch.repository';
 import { PgVehicleRepository } from './repositories/pg-vehicle.repository';
 import { PgNotificationRepository } from './repositories/pg-notification.repository';
 import { PgSalesRepository } from './repositories/pg-sales.repository';
@@ -27,6 +28,7 @@ const app = createApp({
   transactions: new PgTransactionRunner(pool),
   notifications: new PgNotificationRepository(pool),
   sales: new PgSalesRepository(pool),
+  watches: new PgWatchRepository(),
   hasher: new BcryptPasswordHasher(config.bcryptRounds),
   tokens: new JwtTokenService({ secret: config.jwtSecret, expiresInSeconds: config.jwtExpiresInSeconds }),
   config,

@@ -13,6 +13,7 @@ import type { ITransactionRunner } from './db/transaction';
 import type { INotificationRepository } from './repositories/notification.repository';
 import type { ISalesRepository } from './repositories/sales.repository';
 import type { IStockRepository } from './repositories/stock.repository';
+import type { IWatchRepository } from './repositories/watch.repository';
 import type { IUserRepository } from './repositories/user.repository';
 import type { IVehicleRepository } from './repositories/vehicle.repository';
 import { authRoutes } from './routes/auth.routes';
@@ -27,7 +28,7 @@ import { VehicleService } from './services/vehicle.service';
 
 export type AppConfig = Pick<
   Config,
-  'env' | 'corsOrigin' | 'jwtExpiresInSeconds' | 'lowStockThreshold' | 'forecastWindowDays' | 'forecastAtRiskDays'
+  'env' | 'corsOrigin' | 'jwtExpiresInSeconds' | 'lowStockThreshold' | 'forecastWindowDays' | 'forecastAtRiskDays' | 'maxWatchesPerUser'
 >;
 
 export interface AppDeps {
@@ -41,6 +42,7 @@ export interface AppDeps {
   tokens: ITokenService;
   notifications: INotificationRepository;
   sales: ISalesRepository;
+  watches: IWatchRepository;
   /** Injected so forecast tests control "now". */
   clock?: () => Date;
   config: AppConfig;

@@ -6,6 +6,7 @@ import { PgNotificationRepository } from '../../src/repositories/pg-notification
 import { PgSalesRepository } from '../../src/repositories/pg-sales.repository';
 import { PgStockRepository } from '../../src/repositories/pg-stock.repository';
 import { PgUserRepository } from '../../src/repositories/pg-user.repository';
+import { PgWatchRepository } from '../../src/repositories/pg-watch.repository';
 import { PgVehicleRepository } from '../../src/repositories/pg-vehicle.repository';
 import type { Role } from '../../src/types/user';
 import { FakePasswordHasher, FakeTokenService } from './fakes';
@@ -23,6 +24,7 @@ export function buildDbApp(pool: Pool, overrides: Partial<AppDeps> = {}) {
     transactions: new PgTransactionRunner(pool),
     notifications: new PgNotificationRepository(pool),
     sales: new PgSalesRepository(pool),
+    watches: new PgWatchRepository(),
     hasher: new FakePasswordHasher(),
     tokens,
     config: testConfig(),

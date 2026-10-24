@@ -13,6 +13,7 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     lowStockThreshold: 3,
     forecastWindowDays: 30,
     forecastAtRiskDays: 7,
+    maxWatchesPerUser: 50,
     ...overrides,
   };
 }
@@ -27,6 +28,7 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
     transactions: unusedRepository('transactions'),
     notifications: unusedRepository('notifications'),
     sales: unusedRepository('sales'),
+    watches: unusedRepository('watches'),
     hasher: new FakePasswordHasher(),
     tokens,
     config: testConfig(),
