@@ -1,7 +1,8 @@
-import type { Vehicle, VehicleForecast } from '../api/types';
+import type { NewVehicleInput, Vehicle, VehicleForecast } from '../api/types';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Drawer } from '../components/ui/Drawer';
 import { useToast } from '../components/ui/Toast';
+import { pluralise } from '../lib/format';
 import { errorMessage, useCreateVehicle, useDeleteVehicle, useRestock, useUpdateVehicle } from './mutations';
 import { RestockForm } from './RestockForm';
 import { VehicleDetail } from './VehicleDetail';
@@ -14,6 +15,13 @@ export type Panel =
   | { kind: 'edit'; vehicle: Vehicle }
   | { kind: 'restock'; vehicle: Vehicle }
   | { kind: 'delete'; vehicle: Vehicle };
+
+/** "2 × Blue", or "5 units in 2 colours" when several were received at once. */
+function receivedText(input: NewVehicleInput): string {
+  const colours = input.colours ?? [{ name: input.colour?.name ?? 'Standard', quantity: input.quantity }];
+  if (colours.length === 1) return `${colours[0]!.quantity} × ${colours[0]!.name}`;
+  return `${pluralise(input.quantity, 'unit')} in ${colours.length} colours`;
+}
 
 interface VehiclePanelsProps {
   panel: Panel | null;
@@ -45,9 +53,7 @@ export function VehiclePanels({ panel, onClose, forecastById, windowDays }: Vehi
           onSubmit={async (input) => {
             const { vehicle, merged } = await create.mutateAsync(input);
             toast.success(
-              merged
-                ? `Added ${input.quantity} × ${input.colour?.name ?? 'Standard'} to ${vehicleName(vehicle)}`
-                : `Added ${vehicleName(vehicle)}`,
+              merged ? `Added ${receivedText(input)} to ${vehicleName(vehicle)}` : `Added ${vehicleName(vehicle)}`,
             );
             onClose();
           }}
