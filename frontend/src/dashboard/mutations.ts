@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '../api/client';
-import type { NewVehicleInput, VehicleInput } from '../api/types';
+import type { ColourUnits, NewVehicleInput, VehicleInput } from '../api/types';
 import { useApi } from '../app/ApiContext';
 import { queryKeys } from './queries';
 
@@ -49,8 +49,7 @@ export function useRestock() {
   const api = useApi();
   const invalidate = useInvalidateInventory();
   return useMutation({
-    mutationFn: ({ id, quantity, colourId }: { id: string; quantity: number; colourId: string }) =>
-      api.vehicles.restock(id, quantity, colourId),
+    mutationFn: ({ id, colours }: { id: string; colours: ColourUnits[] }) => api.vehicles.restock(id, colours),
     onSuccess: invalidate,
   });
 }

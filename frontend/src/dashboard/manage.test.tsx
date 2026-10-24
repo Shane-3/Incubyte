@@ -179,7 +179,7 @@ describe('restock (admins)', () => {
     expect(quantity).toHaveAccessibleDescription('Suggested: 16 (covers 30 days of sales)');
     await user.click(within(drawer).getByRole('button', { name: 'Restock' }));
 
-    expect(api.vehicles.restock).toHaveBeenCalledWith('v-rav4', 16, 'v-rav4-standard');
+    expect(api.vehicles.restock).toHaveBeenCalledWith('v-rav4', [{ colourId: 'v-rav4-standard', quantity: 16 }]);
     expect(await screen.findByText('Restocked Toyota RAV4: 18 in stock')).toBeInTheDocument();
   });
 

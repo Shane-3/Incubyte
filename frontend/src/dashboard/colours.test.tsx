@@ -79,34 +79,60 @@ describe('purchasing a colour', () => {
   });
 });
 
-describe('restocking a colour (admins)', () => {
-  it('asks which colour when the model has several, starting with a sold-out one', async () => {
+describe('restocking colours (admins)', () => {
+  async function openRestock(user: ReturnType<typeof renderApp>['user'], name: string) {
+    const row = await rowFor(name);
+    await user.click(within(row).getByRole('button', { name: `More actions for ${name}` }));
+    await user.click(screen.getByRole('menuitem', { name: 'Restock' }));
+    return screen.getByRole('dialog', { name: `Restock ${name}` });
+  }
+
+  it('restocks several colours at once, each with its own units', async () => {
     const api = apiFor(dana);
     api.vehicles.restock.mockResolvedValue(camry);
     const { user } = renderApp({ api });
 
-    const row = await rowFor('Toyota Camry');
-    await user.click(within(row).getByRole('button', { name: 'More actions for Toyota Camry' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Restock' }));
-    const drawer = screen.getByRole('dialog', { name: 'Restock Toyota Camry' });
-    const colours = within(drawer).getByRole('radiogroup', { name: 'Colour' });
+    const drawer = await openRestock(user, 'Toyota Camry');
+    const black = within(drawer).getByLabelText('Midnight Black Metallic units to add');
+    expect(black).toHaveAccessibleDescription('0 in stock');
+    await user.type(within(drawer).getByLabelText('Supersonic Red units to add'), '2');
+    await user.type(black, '3');
 
-    expect(within(colours).getByRole('radio', { name: /Midnight Black Metallic/ })).toBeChecked();
-    await user.click(within(colours).getByRole('radio', { name: /Supersonic Red/ }));
+    expect(within(drawer).getByText('5 units across 2 colours')).toBeInTheDocument();
+    await user.click(within(drawer).getByRole('button', { name: 'Restock' }));
+
+    expect(api.vehicles.restock).toHaveBeenCalledWith('v-camry', [
+      { colourId: 'c-red', quantity: 2 },
+      { colourId: 'c-black', quantity: 3 },
+    ]);
+  });
+
+  it('needs at least one unit somewhere, and whole units everywhere', async () => {
+    const api = apiFor(dana);
+    const { user } = renderApp({ api });
+
+    const drawer = await openRestock(user, 'Toyota Camry');
+    await user.click(within(drawer).getByRole('button', { name: 'Restock' }));
+    expect(within(drawer).getByText('Enter at least 1 unit')).toBeInTheDocument();
+
+    await user.type(within(drawer).getByLabelText('Wind Chill Pearl units to add'), '1.5');
+    await user.click(within(drawer).getByRole('button', { name: 'Restock' }));
+    expect(within(drawer).getByLabelText('Wind Chill Pearl units to add')).toHaveAccessibleDescription(
+      'Use whole units, 0 or more',
+    );
+    expect(api.vehicles.restock).not.toHaveBeenCalled();
+  });
+
+  it('keeps a single field for a single-colour model', async () => {
+    const api = apiFor(dana, [vehicle({ id: 'v-civic', make: 'Honda', model: 'Civic' })]);
+    api.vehicles.restock.mockResolvedValue(vehicle({ id: 'v-civic', make: 'Honda', model: 'Civic', quantity: 9 }));
+    const { user } = renderApp({ api });
+
+    const drawer = await openRestock(user, 'Honda Civic');
     await user.type(within(drawer).getByLabelText('Units to add'), '3');
     await user.click(within(drawer).getByRole('button', { name: 'Restock' }));
 
-    expect(api.vehicles.restock).toHaveBeenCalledWith('v-camry', 3, 'c-red');
-  });
-
-  it('does not ask for a colour when there is only one', async () => {
-    const { user } = renderApp({ api: apiFor(dana, [vehicle({ id: 'v-civic', make: 'Honda', model: 'Civic' })]) });
-
-    const row = await rowFor('Honda Civic');
-    await user.click(within(row).getByRole('button', { name: 'More actions for Honda Civic' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Restock' }));
-
-    expect(within(screen.getByRole('dialog')).queryByRole('radiogroup', { name: 'Colour' })).toBeNull();
+    expect(api.vehicles.restock).toHaveBeenCalledWith('v-civic', [{ colourId: 'v-civic-standard', quantity: 3 }]);
   });
 });
 

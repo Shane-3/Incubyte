@@ -41,6 +41,12 @@ export type VehicleInput = Pick<Vehicle, 'make' | 'model' | 'category' | 'price'
 
 export type ColourStock = ColourInput & { quantity: number };
 
+/** Units of an existing colour, e.g. for a restock. */
+export interface ColourUnits {
+  colourId: string;
+  quantity: number;
+}
+
 /**
  * Adding stock: a new model, or (same make + model) colours of an existing one. With `colours`, each has its own
  * units and `quantity` is their total.

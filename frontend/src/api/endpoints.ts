@@ -1,5 +1,6 @@
 import type { ApiClient } from './client';
 import type {
+  ColourUnits,
   CreateResult,
   ForecastReport,
   Inbox,
@@ -36,8 +37,14 @@ export function createEndpoints(client: ApiClient) {
       remove: (id: string) => client.del<void>(`/vehicles/${id}`),
       purchase: (id: string, quantity: number, colourId: string) =>
         client.post<{ vehicle: Vehicle }>(`/vehicles/${id}/purchase`, { quantity, colourId }).then((r) => r.vehicle),
-      restock: (id: string, quantity: number, colourId: string) =>
-        client.post<{ vehicle: Vehicle }>(`/vehicles/${id}/restock`, { quantity, colourId }).then((r) => r.vehicle),
+      /** Units per colour, applied together as one restock. */
+      restock: (id: string, colours: ColourUnits[]) =>
+        client
+          .post<{ vehicle: Vehicle }>(`/vehicles/${id}/restock`, {
+            quantity: colours.reduce((sum, c) => sum + c.quantity, 0),
+            colours,
+          })
+          .then((r) => r.vehicle),
       watch: (id: string) => client.post<{ watching: boolean }>(`/vehicles/${id}/watch`),
       unwatch: (id: string) => client.del<void>(`/vehicles/${id}/watch`),
     },
