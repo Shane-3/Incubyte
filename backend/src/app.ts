@@ -2,6 +2,7 @@ import cookieParser from 'cookie-parser';
 import express, { type Express } from 'express';
 import type { Config } from './config';
 import { createAuthController } from './controllers/auth.controller';
+import { BackInStockHandler } from './handlers/back-in-stock.handler';
 import { LowStockAlertHandler } from './handlers/low-stock-alert.handler';
 import { createVehicleController } from './controllers/vehicle.controller';
 import { authenticate } from './middleware/authenticate';
@@ -69,7 +70,10 @@ export function createApp(deps: AppDeps): Express {
   const stockChanges = new StockChangeService(
     deps.transactions,
     deps.stock,
-    deps.stockHandlers ?? [new LowStockAlertHandler(deps.notifications, config.lowStockThreshold)],
+    deps.stockHandlers ?? [
+      new LowStockAlertHandler(deps.notifications, config.lowStockThreshold),
+      new BackInStockHandler(deps.notifications),
+    ],
   );
   const vehicleService = new VehicleService(deps.vehicles, stockChanges);
   const watchService = new WatchService(deps.transactions, deps.watches, config.maxWatchesPerUser);

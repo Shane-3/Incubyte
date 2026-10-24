@@ -4,6 +4,12 @@ import type { Vehicle, VehicleChanges } from '../types/vehicle';
 import { toVehicle, VEHICLE_COLUMNS, type VehicleRow } from './pg-vehicle.repository';
 import type { IStockRepository, PurchaseRecord } from './stock.repository';
 
+// Fixed column map: identifiers are never built from input.
+const EDITABLE_COLUMNS = { make: 'make', model: 'model', category: 'category', price: 'price' } as const;
+const QUALIFIED_COLUMNS = VEHICLE_COLUMNS.split(', ')
+  .map((c) => `v.${c}`)
+  .join(', ');
+
 export class PgStockRepository implements IStockRepository {
   async decrement(tx: Queryable, vehicleId: string, quantity: number): Promise<Vehicle | null> {
     if (!isUuid(vehicleId)) return null;
@@ -27,12 +33,26 @@ export class PgStockRepository implements IStockRepository {
   }
 
   async set(
-    _tx: Queryable,
-    _vehicleId: string,
-    _quantity: number,
-    _fields: VehicleChanges,
+    tx: Queryable,
+    vehicleId: string,
+    quantity: number,
+    fields: VehicleChanges,
   ): Promise<{ vehicle: Vehicle; before: number } | null> {
-    throw new Error('Not implemented');
+    if (!isUuid(vehicleId)) return null;
+    const { quantity: _ignored, ...others } = fields;
+    const columns = (Object.keys(EDITABLE_COLUMNS) as Array<keyof typeof EDITABLE_COLUMNS>).filter(
+      (key) => others[key] !== undefined,
+    );
+    const assignments = columns.map((key, i) => `${EDITABLE_COLUMNS[key]} = $${i + 3}`);
+    // The row lock in the subquery makes the read of the old quantity and the write one atomic step.
+    const { rows } = await tx.query<VehicleRow & { before: number }>(
+      `UPDATE vehicles v SET ${['quantity = $2', ...assignments, 'updated_at = now()'].join(', ')}
+       FROM (SELECT id, quantity AS before FROM vehicles WHERE id = $1 FOR UPDATE) old
+       WHERE v.id = old.id
+       RETURNING ${QUALIFIED_COLUMNS}, old.before`,
+      [vehicleId, quantity, ...columns.map((key) => others[key])],
+    );
+    return rows[0] ? { vehicle: toVehicle(rows[0]), before: rows[0].before } : null;
   }
 
   async findById(tx: Queryable, vehicleId: string): Promise<Vehicle | null> {

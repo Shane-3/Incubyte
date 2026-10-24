@@ -18,8 +18,15 @@ export class PgNotificationRepository implements INotificationRepository {
     );
   }
 
-  async notifyWatchers(_tx: Queryable, _vehicleId: string, _quantity: number): Promise<number> {
-    throw new Error('Not implemented');
+  async notifyWatchers(tx: Queryable, vehicleId: string, quantity: number): Promise<number> {
+    // Deleting and notifying in one statement means each watch produces exactly one notice.
+    const { rowCount } = await tx.query(
+      `WITH released AS (DELETE FROM watches WHERE vehicle_id = $1 RETURNING user_id)
+       INSERT INTO notifications (recipient_id, type, vehicle_id, quantity)
+       SELECT user_id, 'BACK_IN_STOCK', $1, $2 FROM released`,
+      [vehicleId, quantity],
+    );
+    return rowCount ?? 0;
   }
 
   async resolveAlerts(tx: Queryable, vehicleId: string, types: AdminAlertType[]): Promise<void> {

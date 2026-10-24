@@ -26,6 +26,11 @@ export class VehicleService {
   }
 
   async update(id: string, changes: VehicleChanges): Promise<Vehicle> {
+    if (changes.quantity !== undefined) {
+      // Quantity edits go through the stock pipeline so alerts and back-in-stock notices fire.
+      const { quantity, ...fields } = changes;
+      return this.stockChanges.apply(id, { kind: 'set', quantity, fields });
+    }
     const vehicle = await this.vehicles.update(id, changes);
     if (!vehicle) {
       throw new VehicleNotFoundError();
