@@ -11,6 +11,8 @@ export function buildTestApp(overrides: Partial<AppDeps> = {}) {
   const deps: AppDeps = {
     users,
     vehicles: unusedRepository('vehicles'),
+    stock: unusedRepository('stock'),
+    transactions: unusedRepository('transactions'),
     hasher: new FakePasswordHasher(),
     tokens,
     config: { env: 'test', corsOrigin: FRONTEND_ORIGIN, jwtExpiresInSeconds: 3600 },

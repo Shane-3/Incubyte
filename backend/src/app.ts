@@ -8,6 +8,8 @@ import { requireJsonBody, requireTrustedOrigin } from './middleware/csrf';
 import { errorHandler, notFound } from './middleware/error-handler';
 import { requireRole } from './middleware/require-role';
 import { securityHeaders } from './middleware/security-headers';
+import type { ITransactionRunner } from './db/transaction';
+import type { IStockRepository } from './repositories/stock.repository';
 import type { IUserRepository } from './repositories/user.repository';
 import type { IVehicleRepository } from './repositories/vehicle.repository';
 import { authRoutes } from './routes/auth.routes';
@@ -15,11 +17,16 @@ import { vehicleRoutes } from './routes/vehicle.routes';
 import { AuthService } from './services/auth.service';
 import type { IPasswordHasher } from './services/password-hasher';
 import type { ITokenService } from './services/token.service';
+import type { IStockChangeHandler } from './types/stock';
 import { VehicleService } from './services/vehicle.service';
 
 export interface AppDeps {
   users: IUserRepository;
   vehicles: IVehicleRepository;
+  stock: IStockRepository;
+  transactions: ITransactionRunner;
+  /** Rules run inside every stock change (low-stock alerts, back-in-stock). */
+  stockHandlers?: IStockChangeHandler[];
   hasher: IPasswordHasher;
   tokens: ITokenService;
   config: Pick<Config, 'env' | 'corsOrigin' | 'jwtExpiresInSeconds'>;

@@ -4,6 +4,8 @@ import { createApp } from './app';
 import { loadConfig } from './config';
 import { PgUserRepository } from './repositories/pg-user.repository';
 import { PgVehicleRepository } from './repositories/pg-vehicle.repository';
+import { PgStockRepository } from './repositories/pg-stock.repository';
+import { PgTransactionRunner } from './db/transaction';
 import { BcryptPasswordHasher } from './services/bcrypt-hasher';
 import { JwtTokenService } from './services/jwt-token.service';
 
@@ -19,6 +21,8 @@ const pool = new Pool({
 const app = createApp({
   users: new PgUserRepository(pool),
   vehicles: new PgVehicleRepository(pool),
+  stock: new PgStockRepository(),
+  transactions: new PgTransactionRunner(pool),
   hasher: new BcryptPasswordHasher(config.bcryptRounds),
   tokens: new JwtTokenService({ secret: config.jwtSecret, expiresInSeconds: config.jwtExpiresInSeconds }),
   config,

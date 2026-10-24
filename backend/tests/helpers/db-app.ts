@@ -1,6 +1,8 @@
 import type { Pool } from 'pg';
 import request from 'supertest';
-import { createApp } from '../../src/app';
+import { type AppDeps, createApp } from '../../src/app';
+import { PgTransactionRunner } from '../../src/db/transaction';
+import { PgStockRepository } from '../../src/repositories/pg-stock.repository';
 import { PgUserRepository } from '../../src/repositories/pg-user.repository';
 import { PgVehicleRepository } from '../../src/repositories/pg-vehicle.repository';
 import type { Role } from '../../src/types/user';
@@ -8,16 +10,19 @@ import { FakePasswordHasher, FakeTokenService } from './fakes';
 import { FRONTEND_ORIGIN } from './test-app';
 
 /** The real app on the test database. Only hashing and token signing are faked, for speed and readability. */
-export function buildDbApp(pool: Pool) {
+export function buildDbApp(pool: Pool, overrides: Partial<AppDeps> = {}) {
   const users = new PgUserRepository(pool);
   const vehicles = new PgVehicleRepository(pool);
   const tokens = new FakeTokenService();
   const app = createApp({
     users,
     vehicles,
+    stock: new PgStockRepository(),
+    transactions: new PgTransactionRunner(pool),
     hasher: new FakePasswordHasher(),
     tokens,
     config: { env: 'test', corsOrigin: FRONTEND_ORIGIN, jwtExpiresInSeconds: 3600 },
+    ...overrides,
   });
 
   let counter = 0;
@@ -25,7 +30,7 @@ export function buildDbApp(pool: Pool) {
     counter += 1;
     const user = await users.create({
       name: role === 'admin' ? 'Dana Okafor' : 'Priya Nair',
-      email: `${role}${counter}@example.com`,
+      email: `${role}${counter}-${Math.random().toString(36).slice(2, 8)}@example.com`,
       passwordHash: 'hashed:Passw0rd!',
       role,
     });
