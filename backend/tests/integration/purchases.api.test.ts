@@ -112,7 +112,11 @@ describe('GET /api/purchases (admins)', () => {
 
     const res = await live.get('/api/purchases', admin);
 
-    expect(res.body.data[0]).toMatchObject({ quantity: 2, buyer: { id: buyer.id }, colour: { name: 'Supersonic Red' } });
+    expect(res.body.data[0]).toMatchObject({
+      quantity: 2,
+      buyer: { id: buyer.id },
+      colour: { name: 'Supersonic Red' },
+    });
   });
 
   it.each([

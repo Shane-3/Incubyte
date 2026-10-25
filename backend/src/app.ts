@@ -23,11 +23,13 @@ import type { IVehicleRepository } from './repositories/vehicle.repository';
 import type { IWatchRepository } from './repositories/watch.repository';
 import { authRoutes } from './routes/auth.routes';
 import { notificationRoutes } from './routes/notification.routes';
+import { purchaseRoutes } from './routes/purchase.routes';
 import { vehicleRoutes } from './routes/vehicle.routes';
 import { AuthService } from './services/auth.service';
 import { ForecastService } from './services/forecast.service';
 import { NotificationService } from './services/notification.service';
 import type { IPasswordHasher } from './services/password-hasher';
+import { PurchaseService } from './services/purchase.service';
 import { StockChangeService } from './services/stock-change.service';
 import type { ITokenService } from './services/token.service';
 import { VehicleService } from './services/vehicle.service';
@@ -98,9 +100,11 @@ export function createApp(deps: AppDeps): Express {
       new BackInStockHandler(deps.notifications),
     ],
   );
+  const clock = deps.clock ?? (() => new Date());
+  const adminOnly = requireRole(deps.users)('admin');
   const vehicleService = new VehicleService(deps.vehicles, stockChanges);
   const watchService = new WatchService(deps.transactions, deps.watches, config.maxWatchesPerUser);
-  const forecastService = new ForecastService(deps.sales, deps.clock ?? (() => new Date()), {
+  const forecastService = new ForecastService(deps.sales, clock, {
     windowDays: config.forecastWindowDays,
     atRiskDays: config.forecastAtRiskDays,
   });
@@ -108,9 +112,14 @@ export function createApp(deps: AppDeps): Express {
     '/api/vehicles',
     vehicleRoutes(createVehicleController(vehicleService, forecastService, watchService), {
       authenticate: requireSession,
-      adminOnly: requireRole(deps.users)('admin'),
+      adminOnly,
       throttle: limiters.sensitive(),
     }),
+  );
+
+  app.use(
+    '/api/purchases',
+    purchaseRoutes(new PurchaseService(deps.sales, clock), { authenticate: requireSession, adminOnly }),
   );
 
   const notificationService = new NotificationService(deps.notifications);
