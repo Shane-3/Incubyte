@@ -203,7 +203,7 @@ describe('demo access on the sign-in page', () => {
     const demo = await screen.findByRole('region', { name: 'Demo access' });
     await user.click(within(demo).getByRole('link', { name: 'Create a user account' }));
 
-    expect(await screen.findByRole('heading', { name: 'Create account' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Create your account' })).toBeInTheDocument();
   });
 
   it('shows no credentials unless the demo admin is configured', async () => {

@@ -11,7 +11,7 @@ export function AuthLayout({ title, children, footer }: { title: string; childre
           <h1 className="mb-5 text-xl font-semibold">{title}</h1>
           {children}
         </div>
-        <p className="mt-4 text-center text-sm text-muted">{footer}</p>
+        {footer && <p className="mt-4 text-center text-sm text-muted">{footer}</p>}
       </div>
     </main>
   );

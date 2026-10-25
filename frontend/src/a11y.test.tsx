@@ -42,6 +42,16 @@ describe('accessibility (axe)', () => {
     expect(await violations()).toEqual([]);
   });
 
+  it('sign-in page with demo access has no violations', async () => {
+    vi.stubEnv('VITE_DEMO_ADMIN_EMAIL', 'demo.admin@example.com');
+    vi.stubEnv('VITE_DEMO_ADMIN_PASSWORD', 'not-a-real-secret');
+    renderApp({ api: signedOut(), route: '/login' });
+    await screen.findByRole('region', { name: 'Demo access' });
+
+    expect(await violations()).toEqual([]);
+    vi.unstubAllEnvs();
+  });
+
   it('registration page with field errors has no violations', async () => {
     const { user } = renderApp({ api: signedOut(), route: '/register' });
     await user.click(await screen.findByRole('button', { name: 'Create account' }));
