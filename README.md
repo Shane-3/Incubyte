@@ -197,7 +197,7 @@ Security is a release gate here ([security.md](security.md)). In short:
 **How I used it:**
 
 - **Specs first.** I wrote the four specification documents (requirements, design, architecture, security) and asked Claude to read them before any code was written.
-- **Building in TDD cycles.** Claude worked through each feature as a red-green cycle: it wrote the failing tests, committed them, implemented until they passed, and committed again. Every AI-assisted commit carries a `Co-authored-by` trailer.
+- **Building in TDD cycles.** Claude worked through each feature as a red-green cycle: it wrote the failing tests, committed them, implemented until they passed, and committed again. Every AI-assisted commit carries a `Co-authored-by` trailer. Later commits use `Claude Opus 5.5 <noreply@anthropic.com>` instead of the template's `AI@users.noreply.github.com`: GitHub reads that address as the account `ai`, an unrelated developer, and listed him as a contributor.
 - **Fixing its own mistakes.** It caught and corrected some of its own errors along the way, and the history records them:
   - a broken red commit, redone before anything was pushed
   - a SQL placeholder mangled by a scripted edit, caught by a failing integration test
