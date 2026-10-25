@@ -76,10 +76,13 @@ If you use `docker compose`, point the URLs at it: `postgres://postgres:postgres
 ```bash
 cd frontend
 npm install
+cp .env.example .env.local  # optional: the demo admin shown on the sign-in page
 npm run dev
 ```
 
 The Vite dev server proxies `/api` to the backend, so the browser sees one origin, as it would in production. Sign in with the admin from your `.env`, or create a regular account on the sign-up page.
+
+**Demo access:** set `VITE_DEMO_ADMIN_EMAIL` and `VITE_DEMO_ADMIN_PASSWORD` in `frontend/.env.local` (git-ignored) to the admin from the backend's `.env`. The sign-in page then shows them under the form, with a **Use admin account** button, and asks people who want the user view to create an account. Without both variables nothing is shown.
 
 ## Tests and coverage
 
@@ -182,6 +185,7 @@ Security is a release gate here ([security.md](security.md)). In short:
 - **Days left column:** shown but not sortable, because sorting needs the forecast on the server.
 - **Narrow screens:** below 768 px the table shows vehicle, price, stock and actions as stacked rows, sorted from a select. Category appears from 1024 px and Days left from 1024 px.
 - **Notifications:** delivered in-app only, by polling every 30 seconds (no email, push or SSE).
+- **Demo access exposes the admin password:** the `VITE_DEMO_*` values are bundled into public JavaScript, so anyone who can open the site can sign in as admin. Set them only for a demo database, and leave them unset in a real deployment.
 - **Production deploy:** not done. Fill in the API host in `frontend/vercel.json` and set `TRUST_PROXY` behind the host's proxy.
 
 ## My AI Usage
