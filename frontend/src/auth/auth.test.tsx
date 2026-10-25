@@ -1,7 +1,7 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { ApiError } from '../api/client';
 import { SESSION_EXPIRED_EVENT } from '../auth/AuthProvider';
-import { fakeApi, priya } from '../test/fake-api';
+import { dana, fakeApi, priya } from '../test/fake-api';
 import { renderApp } from '../test/render';
 
 function signedIn() {
@@ -160,5 +160,57 @@ describe('create account', () => {
     await waitFor(() =>
       expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('Password is too common'),
     );
+  });
+});
+
+describe('demo access on the sign-in page', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  function withDemoAdmin() {
+    vi.stubEnv('VITE_DEMO_ADMIN_EMAIL', 'demo.admin@example.com');
+    vi.stubEnv('VITE_DEMO_ADMIN_PASSWORD', 'not-a-real-secret');
+  }
+
+  it('shows the demo admin email and password below the form', async () => {
+    withDemoAdmin();
+    renderApp({ api: signedOut(), route: '/login' });
+
+    const demo = await screen.findByRole('region', { name: 'Demo access' });
+    expect(within(demo).getByText('demo.admin@example.com')).toBeInTheDocument();
+    expect(within(demo).getByText('not-a-real-secret')).toBeInTheDocument();
+  });
+
+  it('fills the form with the admin account and signs in with it', async () => {
+    withDemoAdmin();
+    const api = signedOut();
+    api.auth.login.mockResolvedValue(dana);
+    const { user } = renderApp({ api, route: '/login' });
+
+    await user.click(await screen.findByRole('button', { name: 'Use admin account' }));
+    expect(screen.getByLabelText('Email')).toHaveValue('demo.admin@example.com');
+    expect(screen.getByLabelText('Password')).toHaveValue('not-a-real-secret');
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(api.auth.login).toHaveBeenCalledWith('demo.admin@example.com', 'not-a-real-secret');
+  });
+
+  it('asks people who want the user view to create their own account', async () => {
+    withDemoAdmin();
+    const { user } = renderApp({ api: signedOut(), route: '/login' });
+
+    const demo = await screen.findByRole('region', { name: 'Demo access' });
+    await user.click(within(demo).getByRole('link', { name: 'Create a user account' }));
+
+    expect(await screen.findByRole('heading', { name: 'Create account' })).toBeInTheDocument();
+  });
+
+  it('shows no credentials unless the demo admin is configured', async () => {
+    renderApp({ api: signedOut(), route: '/login' });
+
+    await screen.findByRole('heading', { name: 'Sign in' });
+    expect(screen.queryByRole('region', { name: 'Demo access' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Create an account' })).toBeInTheDocument();
   });
 });
