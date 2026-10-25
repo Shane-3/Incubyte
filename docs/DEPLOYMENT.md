@@ -55,7 +55,6 @@ You don't need to create any tables. The API applies its migrations every time i
 
    | Key | Value |
    |---|---|
-   | `NODE_VERSION` | `22` |
    | `NODE_ENV` | `production` |
    | `DATABASE_URL` | the Neon connection string from step 1 |
    | `JWT_SECRET` | a new random secret (see below) |
@@ -73,6 +72,7 @@ You don't need to create any tables. The API applies its migrations every time i
    - **`JWT_SECRET`:** the API refuses to start in production if the secret is shorter than 32 bytes or is the placeholder from `.env.example`.
    - **`TRUST_PROXY=2`:** requests pass through two proxies (Vercel, then Render), and the rate limits need the visitor's real IP address. If people start hitting "Too many requests" together, this value is wrong.
    - **`PORT`:** leave it out. Render sets it, and the API reads it.
+   - **Node.js version:** comes from [backend/.node-version](../backend/.node-version) (22, the same as CI), so you don't need to set it.
 
 4. Choose **Create Web Service** and wait for the deploy. The log should end with lines like:
    ```text
@@ -168,6 +168,7 @@ Open the Vercel URL and work through this list:
 | Every API call returns 404 | `vercel.json` still says `YOUR-API-HOST`, or the change wasn't pushed. |
 | First load after a while is slow or returns 502/504 | Render's free plan sleeps after 15 idle minutes and takes about a minute to wake. Open `<api-url>/api/auth/me` first, then retry. Before a demo, wake it a minute early. |
 | Render deploy fails with `JWT_SECRET must be at least 32 bytes` | Generate the secret with the command in step 2. |
+| Render build fails with ``npm ci` command can only install with an existing package-lock.json`` | **Root Directory** is empty, so Render built from the repo root. Set it to `backend` (Settings → Build & Deploy) and deploy again. |
 | Render build fails with `tsc: not found` | The build command is missing `--include=dev`. |
 | Render log shows `connect ETIMEDOUT` or an SSL error | `DATABASE_URL` is wrong, or missing `?sslmode=require`. Copy it again from Neon. |
 | Signed in, but every reload goes back to sign-in | The site is opened through the Render URL, or over `http`. Use the Vercel `https` URL. |
