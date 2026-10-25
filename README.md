@@ -190,18 +190,39 @@ Security is a release gate here ([security.md](security.md)). In short:
 
 ## My AI Usage
 
-> **Note to self (delete before submitting):** this section must be in your own words. The facts below are accurate; rewrite the reflection from your own experience.
-
-**Tools:** Claude Code (Claude Opus 5.5), in VS Code. Raw session logs are in [PROMPTS.md](PROMPTS.md).
+**Tools:** Claude Code (Claude Opus 5.5), in VS Code. Every prompt I gave it is in [PROMPTS.md](PROMPTS.md).
 
 **How I used it:**
 
-- **Specs first.** I wrote the four specification documents (requirements, design, architecture, security) and asked Claude to read them before any code was written.
-- **Building in TDD cycles.** Claude worked through each feature as a red-green cycle: it wrote the failing tests, committed them, implemented until they passed, and committed again. Every AI-assisted commit carries a `Co-authored-by` trailer. It uses `Claude Opus 5.5 <noreply@anthropic.com>` instead of the template's `AI@users.noreply.github.com`, because GitHub reads that address as the account `ai`, an unrelated developer, and lists him as a contributor.
-- **Fixing its own mistakes.** It caught and corrected some of its own errors along the way, and the history records them:
-  - a broken red commit, redone before anything was pushed
+- **Specs first.** I wrote the four specification documents (requirements, design, architecture, security) and had Claude read them before any code was written, so it built to my plan rather than its own.
+- **Building in TDD cycles.** Claude worked through each feature as a red-green cycle: failing tests in one commit, the code that makes them pass in the next. Every AI-assisted commit carries a `Co-authored-by` trailer. It uses `Claude Opus 5.5 <noreply@anthropic.com>` instead of the template's `AI@users.noreply.github.com`, because GitHub reads that address as the account `ai`, an unrelated developer, and listed him as a contributor on my repo. I noticed, rewrote the trailers and re-published the repo.
+- **Decisions I made.** I chose the stack and ran PostgreSQL natively instead of in Docker. I set the security and UI non-negotiables, and filled in `.env` myself so no credentials ever went into the chat. When Claude offered options, I picked:
+  - stock held per colour
+  - built-in car illustrations instead of photos
+  - adding an existing make and model merges into it
+  - an auto-generated SKU
+- **Steering it.** Most of my input came from using the app and pushing back on what I saw:
+  - Admins were offered *Purchase* and *Notify me* on sold-out rows, so I had those rows offer *Restock* to admins, while keeping the API exactly as specified.
+  - I asked for colour variants that share one SKU, and for cars you can view in each colour.
+  - From a screenshot I flagged a misaligned Paint field, and the fact that you couldn't add several colours at once.
+  - I asked for restocks to cover several colours in one go.
+  - I asked for an admin-only purchases page, and for demo access on the sign-in page.
+- **Where I kept the spec.** I questioned why regular users can edit vehicles. Claude pointed out that the requirements allow it, so I kept it.
+- **Its own mistakes.** Claude caught some of its own errors, and the history records them:
+  - a broken red commit, redone
   - a SQL placeholder mangled by a scripted edit, caught by a failing integration test
   - tests that passed before their feature existed, tightened so they meant something
-- **Decisions I made.** I chose the stack, set up the local database, and decided on the security and UI non-negotiables.
+  - a price formatter showing "$27,999.5", fixed with a regression test
 
-**Reflection:** *(write in your own words, e.g. where AI sped you up, where you had to steer or correct it, what you checked yourself, and what you would do differently)*
+**Reflection:**
+
+AI sped up the parts that are slow to type but easy to specify: test scaffolding, validation, the security controls in security.md, and the concurrency tests for the last unit in stock. Having the specs written first made the biggest difference. Claude could check its work against them, and so could I.
+
+It didn't replace judgement. The things I steered were product and UX calls it had no way to know: what an admin should see on a sold-out row, how colours relate to a model, and when a layout looked off. Reviewing through the running app caught issues the tests didn't. Small details like the co-author address had real consequences I only noticed once the repo was public.
+
+Next time I would:
+- deploy early, so the app is reviewed where it will actually run
+- check conventions like the commit trailer on the first push
+- read more of the generated code alongside using the app, rather than relying mostly on the tests and screenshots
+
+Claude also drafted this README, including this section, from the session log.

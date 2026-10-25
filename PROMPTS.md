@@ -99,8 +99,3 @@ Add a page or smth where they can track the latest purchases happened and it is 
 In the login page below the form give admin password and email but for user ask to create one
 ```
 
-### 14. 2026-10-25 10:52 UTC (with a screenshot)
-
-```text
-who's this? Also add the necessary prompts to the prompts.md
-```
