@@ -9,6 +9,7 @@ A full-stack inventory system for a car dealership, built test-first as a TDD ka
 - [What it does](#what-it-does)
 - [Screenshots](#screenshots)
 - [Run it locally](#run-it-locally)
+- [Deploy it](docs/DEPLOYMENT.md)
 - [Tests and coverage](#tests-and-coverage)
 - [API](#api)
 - [How it is built](#how-it-is-built)
@@ -186,7 +187,7 @@ Security is a release gate here ([security.md](security.md)). In short:
 - **Narrow screens:** below 768 px the table shows vehicle, price, stock and actions as stacked rows, sorted from a select. Category appears from 1024 px and Days left from 1024 px.
 - **Notifications:** delivered in-app only, by polling every 30 seconds (no email, push or SSE).
 - **Demo access exposes the admin password:** the `VITE_DEMO_*` values are bundled into public JavaScript, so anyone who can open the site can sign in as admin. Set them only for a demo database, and leave them unset in a real deployment.
-- **Production deploy:** not done. Fill in the API host in `frontend/vercel.json` and set `TRUST_PROXY` behind the host's proxy.
+- **Production deploy:** step by step in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) (Vercel, Render and Neon free tiers). The free API instance sleeps when idle, so the first request after a pause takes about a minute.
 
 ## My AI Usage
 
