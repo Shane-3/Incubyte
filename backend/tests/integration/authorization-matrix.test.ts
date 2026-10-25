@@ -88,6 +88,12 @@ const MATRIX: Row[] = [
     expected: { anon: 401, user: 403, admin: 200 },
   },
   {
+    endpoint: 'GET /api/purchases',
+    method: 'get',
+    path: () => '/api/purchases',
+    expected: { anon: 401, user: 403, admin: 200 },
+  },
+  {
     endpoint: 'POST /api/vehicles/:id/watch',
     method: 'post',
     path: (c) => `/api/vehicles/${c.vehicleId}/watch`,
