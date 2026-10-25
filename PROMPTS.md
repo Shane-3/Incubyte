@@ -98,4 +98,3 @@ Add a page or smth where they can track the latest purchases happened and it is 
 ```text
 In the login page below the form give admin password and email but for user ask to create one
 ```
-
