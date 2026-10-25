@@ -28,8 +28,9 @@ function SkeletonRows() {
 const th = 'h-9 bg-surface px-3 font-medium';
 
 /**
- * Newest sales first. Below md each row stacks into two columns: vehicle and total, colour and time, buyer and
- * units; the cells keep their DOM order and are only reordered visually.
+ * Newest sales first. Between md and lg (no sidebar, but still a table) the thumbnail, exact time and buyer email
+ * give way, the last two to tooltips. Below md each row stacks into two columns: vehicle and total, colour and time,
+ * buyer and units; the cells keep their DOM order and are only reordered visually.
  */
 export function PurchasesTable({
   purchases,
@@ -81,7 +82,7 @@ export function PurchasesTable({
                 <td className="px-3 whitespace-nowrap max-md:order-4 max-md:text-right">
                   <time dateTime={p.createdAt} title={formatDateTime(p.createdAt)} className="block">
                     <span className="block">{formatRelative(p.createdAt, Math.max(now, Date.parse(p.createdAt)))}</span>
-                    <span className="block text-xs text-muted max-md:hidden">{formatDateTime(p.createdAt)}</span>
+                    <span className="block text-xs text-muted max-lg:hidden">{formatDateTime(p.createdAt)}</span>
                   </time>
                 </td>
                 <td className="px-3 py-1.5 max-md:order-1">
@@ -89,7 +90,7 @@ export function PurchasesTable({
                     <CarIllustration
                       category={p.vehicle.category}
                       hex={p.colour?.hex ?? '#8a8f98'}
-                      className="h-7 w-[70px] shrink-0 max-sm:hidden"
+                      className="h-7 w-[70px] shrink-0 max-sm:hidden md:max-lg:hidden"
                     />
                     <span className="min-w-0">
                       <Link
@@ -102,9 +103,9 @@ export function PurchasesTable({
                     </span>
                   </span>
                 </td>
-                <td className="px-3 max-md:order-3">
+                <td className="px-3 max-md:order-3 md:max-lg:min-w-32">
                   {p.colour ? (
-                    <span className="inline-flex items-center gap-2">
+                    <span className="inline-flex items-center gap-2 lg:whitespace-nowrap">
                       <Swatch hex={p.colour.hex} />
                       <span>{p.colour.name}</span>
                     </span>
@@ -113,8 +114,12 @@ export function PurchasesTable({
                   )}
                 </td>
                 <td className="px-3 max-md:order-5">
-                  <span className="block max-w-[30ch] truncate">{p.buyer.name}</span>
-                  <span className="block max-w-[30ch] truncate text-xs text-muted">{p.buyer.email}</span>
+                  <span title={p.buyer.email} className="block max-w-[30ch] truncate">
+                    {p.buyer.name}
+                  </span>
+                  <span className="block max-w-[30ch] truncate text-xs text-muted md:max-lg:hidden">
+                    {p.buyer.email}
+                  </span>
                 </td>
                 <td className="px-3 text-right tabular-nums max-md:order-6">
                   <span>{p.quantity}</span>
