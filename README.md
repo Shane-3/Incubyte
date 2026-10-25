@@ -27,6 +27,7 @@ A full-stack inventory system for a car dealership, built test-first as a TDD ka
 | Everyone | **Notify me** on a sold-out vehicle; one in-app notice when it is back in stock |
 | Admins | Restock several colours at once, each with its own units (the forecast's suggestion is shown; sold-out rows offer Restock directly) and delete (with a confirmation that names the vehicle) |
 | Admins | **Low-stock alerts** when a sale leaves 3 or fewer, and **sold-out alerts** at 0, de-duplicated and resolved automatically on restock |
+| Admins | **Purchases** page: the latest sales, newest first (when, vehicle, colour, buyer, units, unit price, total), over 7, 30 or 90 days, with orders, units sold, revenue and the average order; refreshes every minute |
 | Admins | **Stock-out forecast**: average daily sales over 30 days, days of stock left, an *At risk* flag at 7 days or fewer, and a suggested restock quantity |
 
 Every stock change runs through one transaction: a purchase, a restock, an edit that changes quantity, or adding a colour. That transaction locks the model row, moves the colour's stock and the model total together, records the sale, and raises or resolves alerts, so none of these can ever disagree. Concurrent purchases of the last unit produce exactly one sale.
@@ -45,8 +46,8 @@ Car pictures are built-in side-view illustrations for each body style (sedan, SU
 | Dark theme | Regular user: sold-out view with Notify me |
 | ![Purchase](docs/screenshots/08-purchase-popover.png) | ![Vehicle detail](docs/screenshots/09-vehicle-detail.png) |
 | Purchase in a chosen colour | Vehicle detail: the car repainted per colour |
-| ![Mobile](docs/screenshots/02-admin-360.png) | |
-| 360 px (stacked rows, Sort by select) | |
+| ![Mobile](docs/screenshots/02-admin-360.png) | ![Purchases](docs/screenshots/10-purchases.png) |
+| 360 px (stacked rows, Sort by select) | Admin purchases feed |
 
 ## Run it locally
 
@@ -93,8 +94,8 @@ Results on 2026-10-25:
 
 | Package | Test files | Tests | Statements | Branches | Functions | Lines |
 |---|---|---|---|---|---|---|
-| Backend | 32 | 470 passed | 98.0% | 90.2% | 99.6% | 99.3% |
-| Frontend | 10 | 113 passed | 90.9% | 86.8% | 88.8% | 93.1% |
+| Backend | 33 | 484 passed | 98.1% | 90.8% | 99.6% | 99.4% |
+| Frontend | 12 | 128 passed | 91.8% | 89.2% | 89.6% | 93.5% |
 
 What the backend suite covers:
 
@@ -103,7 +104,7 @@ What the backend suite covers:
   - 10 concurrent purchases of the last unit give exactly one 200 and nine 409s;
   - concurrent purchases crossing the low-stock threshold leave exactly one open alert per admin;
   - a failing alert handler rolls back both the stock change and the sale.
-- **Security**: a 45-case authorization matrix (every endpoint × anonymous, user and admin), SQL-injection and LIKE-wildcard payloads, XSS payloads rejected at the API, JWT tampering (`alg: none`, foreign secret, edited role, expiry), cookie flags, CSRF origin and content-type checks, rate limits, IDOR on notifications, log redaction and boot-time secret checks.
+- **Security**: a 48-case authorization matrix (every endpoint × anonymous, user and admin), SQL-injection and LIKE-wildcard payloads, XSS payloads rejected at the API, JWT tampering (`alg: none`, foreign secret, edited role, expiry), cookie flags, CSRF origin and content-type checks, rate limits, IDOR on notifications, log redaction and boot-time secret checks.
 
 The frontend suite uses React Testing Library with a fake API: forms and their validation, the disabled Purchase button, role-based controls, markup in names rendering as text, filters in the URL, drawers and dialogs, the notification bell, polling that pauses while the tab is hidden, and axe-core checks on every screen and dialog.
 
@@ -127,6 +128,7 @@ All endpoints are JSON under `/api`. Errors share one shape: `{ "error": { "code
 | POST | `/vehicles/:id/purchase` | signed in | optional `{ quantity, colourId }` (quantity 1 to 10; without a colour, the best-stocked one); 409 when short |
 | POST | `/vehicles/:id/restock` | admin | `{ quantity, colourId }` (colour optional for single-colour models), or `{ quantity, colours: [{ colourId, quantity }] }` to restock several colours as one change |
 | GET | `/vehicles/forecast` | admin | |
+| GET | `/purchases` | admin | latest sales with vehicle, colour, buyer and totals, plus the period's orders, units and revenue; `days` (7, 30 or 90), `limit`, `offset`; never cached |
 | POST / DELETE | `/vehicles/:id/watch` | signed in | only on sold-out vehicles; 50 per user |
 | GET | `/notifications` | signed in | own only; `unread`, `limit` |
 | POST | `/notifications/:id/read`, `/notifications/read-all` | signed in | own only |
