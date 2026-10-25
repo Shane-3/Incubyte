@@ -98,7 +98,7 @@ Results on 2026-10-25:
 | Package | Test files | Tests | Statements | Branches | Functions | Lines |
 |---|---|---|---|---|---|---|
 | Backend | 33 | 484 passed | 98.1% | 90.8% | 99.6% | 99.4% |
-| Frontend | 12 | 128 passed | 91.8% | 89.2% | 89.6% | 93.5% |
+| Frontend | 12 | 133 passed | 91.8% | 89.3% | 89.7% | 93.6% |
 
 What the backend suite covers:
 
