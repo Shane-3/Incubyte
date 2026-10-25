@@ -64,6 +64,9 @@ export function fakeApi(): FakeApi {
       watch: unstubbed('vehicles.watch'),
       unwatch: unstubbed('vehicles.unwatch'),
     },
+    purchases: {
+      list: unstubbed('purchases.list'),
+    },
     notifications: {
       list: vi.fn(() => Promise.resolve(emptyInbox)),
       markRead: unstubbed('notifications.markRead'),

@@ -7,6 +7,8 @@ import type {
   InventoryStats,
   NewVehicleInput,
   Page,
+  PurchaseFeed,
+  PurchaseQuery,
   User,
   Vehicle,
   VehicleInput,
@@ -47,6 +49,10 @@ export function createEndpoints(client: ApiClient) {
           .then((r) => r.vehicle),
       watch: (id: string) => client.post<{ watching: boolean }>(`/vehicles/${id}/watch`),
       unwatch: (id: string) => client.del<void>(`/vehicles/${id}/watch`),
+    },
+    purchases: {
+      /** Admins only: the latest sales in the period, newest first, with the period's totals. */
+      list: (query: PurchaseQuery) => client.get<PurchaseFeed>('/purchases', { ...query }),
     },
     notifications: {
       list: (unreadOnly = false) => client.get<Inbox>('/notifications', { unread: unreadOnly, limit: 20 }),

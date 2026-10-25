@@ -103,6 +103,33 @@ export interface ForecastReport {
   atRiskDays: number;
 }
 
+export const PURCHASE_PERIODS = [7, 30, 90] as const;
+export type PurchasePeriod = (typeof PURCHASE_PERIODS)[number];
+
+/** One sale, as admins see it in the purchases feed. */
+export interface Purchase {
+  id: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  createdAt: string;
+  vehicle: Pick<Vehicle, 'id' | 'make' | 'model' | 'sku' | 'category'>;
+  /** Null when the sale predates colours or its colour was removed. */
+  colour: ColourInput | null;
+  buyer: Pick<User, 'id' | 'name' | 'email'>;
+}
+
+export interface PurchaseQuery {
+  days: PurchasePeriod;
+  limit: number;
+  offset: number;
+}
+
+export interface PurchaseFeed extends Page<Purchase> {
+  summary: { orders: number; units: number; revenue: number };
+  days: PurchasePeriod;
+}
+
 export type NotificationType = 'LOW_STOCK' | 'OUT_OF_STOCK' | 'BACK_IN_STOCK';
 
 export interface AppNotification {

@@ -82,6 +82,31 @@ describe('accessibility (axe)', () => {
     expect(await violations()).toEqual([]);
   });
 
+  it('purchases page has no violations', async () => {
+    const api = signedIn(dana);
+    api.purchases.list.mockResolvedValue({
+      data: [
+        {
+          id: 'p-1',
+          quantity: 1,
+          unitPrice: 28400,
+          total: 28400,
+          createdAt: '2026-10-24T09:30:00Z',
+          vehicle: { id: 'v-camry', make: 'Toyota', model: 'Camry', sku: 'TOY-CAMRY', category: 'Sedan' },
+          colour: { name: 'Supersonic Red', hex: '#a3161a' },
+          buyer: { id: priya.id, name: priya.name, email: priya.email },
+        },
+      ],
+      count: 1,
+      summary: { orders: 1, units: 1, revenue: 28400 },
+      days: 30,
+    });
+    renderApp({ api, route: '/purchases' });
+    await screen.findByRole('link', { name: 'Toyota Camry' });
+
+    expect(await violations()).toEqual([]);
+  });
+
   it('delete confirmation has no violations', async () => {
     const { user } = renderApp({ api: signedIn(dana) });
     const row = (await screen.findByText('Toyota Camry')).closest('tr')!;
