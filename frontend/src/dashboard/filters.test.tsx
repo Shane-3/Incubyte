@@ -138,7 +138,7 @@ describe('sidebar views', () => {
     const api = apiWith();
     const { user } = renderApp({ api });
 
-    const nav = await screen.findByRole('navigation', { name: 'Inventory views' });
+    const nav = await screen.findByRole('navigation', { name: 'Main' });
     await user.click(within(nav).getByRole('link', { name: 'Low stock' }));
 
     await waitFor(() => expect(lastQuery(api)).toMatchObject({ stock: 'low' }));
@@ -168,7 +168,7 @@ describe('sidebar views', () => {
   it('does not offer the At risk view to regular users', async () => {
     renderApp({ api: apiWith() });
 
-    const nav = await screen.findByRole('navigation', { name: 'Inventory views' });
+    const nav = await screen.findByRole('navigation', { name: 'Main' });
     expect(within(nav).queryByRole('link', { name: 'At risk' })).toBeNull();
   });
 });

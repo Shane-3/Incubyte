@@ -80,11 +80,12 @@ describe('purchases page', () => {
   });
 
   it('gives the exact time of each sale', async () => {
-    renderApp({ api: apiFor(), route: '/purchases' });
+    const createdAt = '2026-10-24T09:30:00.000Z';
+    renderApp({ api: apiFor(dana, feed([sale({ createdAt })])), route: '/purchases' });
 
     const row = await rowFor('Toyota Camry');
     const time = row.querySelector('time');
-    expect(time).toHaveAttribute('dateTime', sale().createdAt);
+    expect(time).toHaveAttribute('dateTime', createdAt);
   });
 
   it('links each vehicle to its row in the inventory', async () => {

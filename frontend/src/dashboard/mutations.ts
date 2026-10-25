@@ -13,6 +13,7 @@ export function useInvalidateInventory() {
       queryClient.invalidateQueries({ queryKey: queryKeys.stats }),
       queryClient.invalidateQueries({ queryKey: queryKeys.forecast }),
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.allPurchases }),
     ]);
 }
 

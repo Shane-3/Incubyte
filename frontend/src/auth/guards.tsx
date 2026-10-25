@@ -14,6 +14,18 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   return children;
 }
 
+/**
+ * Admin pages. Others go back to the inventory before the page mounts, so it never requests admin data. The API
+ * enforces the role regardless; this only keeps the UI honest.
+ */
+export function RequireAdmin({ children }: { children: ReactNode }) {
+  const { status, user } = useAuth();
+  if (status === 'restoring') return <Restoring />;
+  if (status === 'signedOut') return <Navigate to="/login" replace />;
+  if (user?.role !== 'admin') return <Navigate to="/" replace />;
+  return children;
+}
+
 export function RedirectIfSignedIn({ children }: { children: ReactNode }) {
   const { status } = useAuth();
   if (status === 'restoring') return <Restoring />;

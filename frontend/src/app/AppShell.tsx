@@ -1,4 +1,4 @@
-import { AlertTriangle, LayoutList, Menu as MenuIcon, PackageX, TrendingDown, X } from 'lucide-react';
+import { AlertTriangle, LayoutList, Menu as MenuIcon, PackageX, Receipt, TrendingDown, X } from 'lucide-react';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router';
 import { useAuth } from '../auth/AuthProvider';
@@ -11,59 +11,101 @@ interface NavItem {
   label: string;
   to: string;
   icon: typeof LayoutList;
-  match: (params: URLSearchParams) => boolean;
+  match: (pathname: string, params: URLSearchParams) => boolean;
   adminOnly?: boolean;
 }
 
-const NAV: NavItem[] = [
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+const NAV: NavSection[] = [
   {
-    label: 'All vehicles',
-    to: '/',
-    icon: LayoutList,
-    match: (p) => !p.get('stock') && !p.get('view'),
+    label: 'Inventory',
+    items: [
+      {
+        label: 'All vehicles',
+        to: '/',
+        icon: LayoutList,
+        match: (path, p) => path === '/' && !p.get('stock') && !p.get('view'),
+      },
+      {
+        label: 'Low stock',
+        to: '/?stock=low',
+        icon: TrendingDown,
+        match: (path, p) => path === '/' && p.get('stock') === 'low',
+      },
+      {
+        label: 'Out of stock',
+        to: '/?stock=out',
+        icon: PackageX,
+        match: (path, p) => path === '/' && p.get('stock') === 'out',
+      },
+      {
+        label: 'At risk',
+        to: '/?view=at-risk',
+        icon: AlertTriangle,
+        match: (path, p) => path === '/' && p.get('view') === 'at-risk',
+        adminOnly: true,
+      },
+    ],
   },
-  { label: 'Low stock', to: '/?stock=low', icon: TrendingDown, match: (p) => p.get('stock') === 'low' },
-  { label: 'Out of stock', to: '/?stock=out', icon: PackageX, match: (p) => p.get('stock') === 'out' },
   {
-    label: 'At risk',
-    to: '/?view=at-risk',
-    icon: AlertTriangle,
-    match: (p) => p.get('view') === 'at-risk',
-    adminOnly: true,
+    label: 'Sales',
+    items: [
+      { label: 'Purchases', to: '/purchases', icon: Receipt, match: (path) => path === '/purchases', adminOnly: true },
+    ],
   },
 ];
 
-export function currentViewLabel(params: URLSearchParams): string {
-  return NAV.find((item) => item.match(params))?.label ?? 'All vehicles';
+/** Section and view for the breadcrumb, e.g. "Inventory / Low stock". */
+export function currentView(pathname: string, params: URLSearchParams): { section: string; label: string } {
+  for (const section of NAV) {
+    const item = section.items.find((i) => i.match(pathname, params));
+    if (item) return { section: section.label, label: item.label };
+  }
+  return { section: 'Inventory', label: 'All vehicles' };
 }
 
 function Nav({ onNavigate }: { onNavigate?: () => void }) {
   const [params] = useSearchParams();
+  const { pathname } = useLocation();
   const { user } = useAuth();
+  const sections = NAV.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => !item.adminOnly || user?.role === 'admin'),
+  })).filter((section) => section.items.length > 0);
+
   return (
-    <nav aria-label="Inventory views">
-      <ul className="flex flex-col gap-0.5">
-        {NAV.filter((item) => !item.adminOnly || user?.role === 'admin').map((item) => {
-          const active = item.match(params);
-          return (
-            <li key={item.label}>
-              <Link
-                to={item.to}
-                onClick={onNavigate}
-                aria-current={active ? 'page' : undefined}
-                className={`flex h-8 items-center gap-2.5 rounded-control px-2.5 text-base ${
-                  active
-                    ? 'bg-surface-hover font-medium text-text'
-                    : 'text-muted hover:bg-surface-hover hover:text-text'
-                }`}
-              >
-                <item.icon aria-hidden="true" className="size-4" strokeWidth={1.5} />
-                {item.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+    <nav aria-label="Main" className="flex flex-col gap-5">
+      {sections.map((section) => (
+        <div key={section.label}>
+          <p className="mb-1 px-2.5 text-xs font-medium text-muted">{section.label}</p>
+          <ul className="flex flex-col gap-0.5">
+            {section.items.map((item) => {
+              const active = item.match(pathname, params);
+              return (
+                <li key={item.label}>
+                  <Link
+                    to={item.to}
+                    onClick={onNavigate}
+                    aria-current={active ? 'page' : undefined}
+                    className={`flex h-8 items-center gap-2.5 rounded-control px-2.5 text-base ${
+                      active
+                        ? 'bg-surface-hover font-medium text-text'
+                        : 'text-muted hover:bg-surface-hover hover:text-text'
+                    }`}
+                  >
+                    <item.icon aria-hidden="true" className="size-4" strokeWidth={1.5} />
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
     </nav>
   );
 }
@@ -116,6 +158,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [navOpen, setNavOpen] = useState(false);
   const [params] = useSearchParams();
   const location = useLocation();
+  const view = currentView(location.pathname, params);
 
   useEffect(() => {
     const saved = storedTheme();
@@ -177,7 +220,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <MenuIcon aria-hidden="true" className="size-4" strokeWidth={1.5} />
         </button>
         <p className="text-sm text-muted">
-          Inventory <span aria-hidden="true">/</span> <span className="text-text">{currentViewLabel(params)}</span>
+          {view.section} <span aria-hidden="true">/</span> <span className="text-text">{view.label}</span>
         </p>
         <div className="ml-auto flex items-center gap-2">
           <NotificationBell />
