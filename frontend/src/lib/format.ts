@@ -1,9 +1,4 @@
-const price = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
-});
+const priceWithCents = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 const wholeCurrency = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -13,9 +8,9 @@ const wholeCurrency = new Intl.NumberFormat('en-US', {
 
 const integer = new Intl.NumberFormat('en-US');
 
-/** $28,400 or $38,999.99: cents only when there are some. */
+/** $28,400 or $27,999.50: cents only when there are some, and then always two digits. */
 export function formatPrice(value: number): string {
-  return price.format(value);
+  return Number.isInteger(value) ? wholeCurrency.format(value) : priceWithCents.format(value);
 }
 
 /** Rounded to whole dollars, for totals. */
