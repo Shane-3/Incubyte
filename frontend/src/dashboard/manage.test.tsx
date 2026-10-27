@@ -111,7 +111,7 @@ describe('add vehicle', () => {
 
 describe('edit vehicle', () => {
   it('prefills the drawer and sends only what changed', async () => {
-    const api = apiFor(priya);
+    const api = apiFor(dana);
     api.vehicles.update.mockResolvedValue({ ...camry, price: 27999 });
     const { user } = renderApp({ api });
 
@@ -125,6 +125,25 @@ describe('edit vehicle', () => {
 
     expect(api.vehicles.update).toHaveBeenCalledWith('v-camry', { price: 27999 });
     expect(await screen.findByText('Saved Toyota Camry')).toBeInTheDocument();
+  });
+
+  it('lets regular users change the make and model but not the price', async () => {
+    const api = apiFor(priya);
+    api.vehicles.update.mockResolvedValue({ ...camry, model: 'Camry Hybrid' });
+    const { user } = renderApp({ api });
+
+    await openRowAction(user, 'Toyota Camry', 'Edit');
+    const drawer = screen.getByRole('dialog', { name: 'Edit Toyota Camry' });
+    const price = within(drawer).getByLabelText('Price');
+    expect(price).toBeDisabled();
+    expect(price).toHaveAccessibleDescription('Only admins can change the price');
+    const model = within(drawer).getByLabelText('Model');
+    await user.clear(model);
+    await user.type(model, 'Camry Hybrid');
+    await user.click(within(drawer).getByRole('button', { name: 'Save changes' }));
+
+    expect(api.vehicles.update).toHaveBeenCalledWith('v-camry', { model: 'Camry Hybrid' });
+    expect(await screen.findByText('Saved Toyota Camry Hybrid')).toBeInTheDocument();
   });
 });
 

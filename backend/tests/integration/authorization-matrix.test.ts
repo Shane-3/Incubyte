@@ -59,8 +59,15 @@ const MATRIX: Row[] = [
     endpoint: 'PUT /api/vehicles/:id',
     method: 'put',
     path: (c) => `/api/vehicles/${c.vehicleId}`,
-    body: { price: 1 },
+    body: { model: 'Corolla' },
     expected: { anon: 401, user: 200, admin: 200 },
+  },
+  {
+    endpoint: 'PUT /api/vehicles/:id (price)',
+    method: 'put',
+    path: (c) => `/api/vehicles/${c.vehicleId}`,
+    body: { price: 1 },
+    expected: { anon: 401, user: 403, admin: 200 },
   },
   {
     endpoint: 'POST /api/vehicles/:id/purchase',

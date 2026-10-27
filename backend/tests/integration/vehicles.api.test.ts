@@ -179,17 +179,38 @@ describe('vehicles API', () => {
   });
 
   describe('PUT /api/vehicles/:id', () => {
-    it('updates the given fields', async () => {
+    it('lets a regular user change the name, make and model', async () => {
       const [camry] = await seedLot();
 
-      const res = await api.mutate('put', `/api/vehicles/${camry!.id}`, user).send({ price: 26999.5 });
+      const res = await api
+        .mutate('put', `/api/vehicles/${camry!.id}`, user)
+        .send({ make: 'Toyota', model: 'Camry Hybrid', category: 'Sedan' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.vehicle).toMatchObject({ id: camry!.id, model: 'Camry Hybrid', price: camry!.price });
+    });
+
+    it('lets an admin change the price', async () => {
+      const [camry] = await seedLot();
+
+      const res = await api.mutate('put', `/api/vehicles/${camry!.id}`, admin).send({ price: 26999.5 });
 
       expect(res.status).toBe(200);
       expect(res.body.vehicle).toMatchObject({ id: camry!.id, model: 'Camry', price: 26999.5 });
     });
 
+    it('forbids a regular user from changing the price, even alongside other fields', async () => {
+      const [camry] = await seedLot();
+
+      const res = await api.mutate('put', `/api/vehicles/${camry!.id}`, user).send({ model: 'Camry Hybrid', price: 1 });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('FORBIDDEN');
+      expect(await api.vehicles.findById(camry!.id)).toMatchObject({ model: 'Camry', price: camry!.price });
+    });
+
     it('returns 404 for an unknown vehicle', async () => {
-      const res = await api.mutate('put', `/api/vehicles/${UNKNOWN_ID}`, user).send({ price: 1 });
+      const res = await api.mutate('put', `/api/vehicles/${UNKNOWN_ID}`, user).send({ model: 'Corolla' });
 
       expect(res.status).toBe(404);
       expect(res.body.error).toEqual({ code: 'NOT_FOUND', message: 'Vehicle not found' });
