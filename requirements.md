@@ -38,7 +38,7 @@ The kata evaluates the **process** as much as the product: TDD history, clean co
 ## 4. Actors
 
 - **Visitor:** can register and log in only.
-- **User (role = `user`):** can view, search, add and update vehicles, and purchase.
+- **User (role = `user`):** can view, search, add and update vehicles (except their price), and purchase.
 - **Admin (role = `admin`):** everything a user can do, plus delete vehicles and restock.
 
 ## 5. Functional Requirements
@@ -64,7 +64,7 @@ The kata evaluates the **process** as much as the product: TDD history, clean co
 | FR-V2 | An authenticated user can create a vehicle (`POST /api/vehicles`). |
 | FR-V3 | An authenticated user can list all available vehicles (`GET /api/vehicles`). |
 | FR-V4 | An authenticated user can search by make, model, category and price range (`GET /api/vehicles/search`). Filters are combinable and optional. |
-| FR-V5 | An authenticated user can update a vehicle (`PUT /api/vehicles/:id`). |
+| FR-V5 | An authenticated user can update a vehicle (`PUT /api/vehicles/:id`). Changing `price` is admin-only (403 for regular users). |
 | FR-V6 | Only an admin can delete a vehicle (`DELETE /api/vehicles/:id`). |
 | FR-V7 | Validation: `price` >= 0, `quantity` is an integer >= 0, required strings non-empty. |
 | FR-V8 | Unknown id returns 404. Invalid payload returns 400/422 with field-level errors. |
@@ -147,7 +147,7 @@ These override any trade-off elsewhere. A build that fails either one is not don
 | POST | `/api/vehicles` | JWT | user+ | 201 | 400/422, 401 |
 | GET | `/api/vehicles` | JWT | user+ | 200 | 401 |
 | GET | `/api/vehicles/search` | JWT | user+ | 200 | 400, 401 |
-| PUT | `/api/vehicles/:id` | JWT | user+ | 200 | 400/422, 401, 404 |
+| PUT | `/api/vehicles/:id` | JWT | user+ (admin to change `price`) | 200 | 400/422, 401, 403, 404 |
 | DELETE | `/api/vehicles/:id` | JWT | admin | 204 | 401, 403, 404 |
 | POST | `/api/vehicles/:id/purchase` | JWT | user+ | 200 | 400, 401, 404, 409 (out of stock) |
 | POST | `/api/vehicles/:id/restock` | JWT | admin | 200 | 400/422, 401, 403, 404 |

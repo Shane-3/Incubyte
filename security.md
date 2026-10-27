@@ -29,7 +29,7 @@ Actors: anonymous attacker, malicious registered user (tries to reach admin acti
 
 | Risk | Controls | Verified by |
 |---|---|---|
-| A01 Broken access control | Deny by default: auth middleware applied router-wide; `requireRole('admin')` on delete and restock; role re-checked from DB on admin actions; role never accepted from client input | Authorization matrix test (section 11.1) |
+| A01 Broken access control | Deny by default: auth middleware applied router-wide; `requireRole('admin')` on delete, restock and price changes; role re-checked from DB on admin actions; role never accepted from client input | Authorization matrix test (section 11.1) |
 | A02 Cryptographic failures | bcrypt (cost 12) for passwords; strong random `JWT_SECRET` (>= 32 bytes) validated at boot; HTTPS + HSTS in production; `Secure` cookie | Config tests, cookie attribute tests |
 | A03 Injection (SQL, XSS, command) | Parameterized queries only; allow-listed sort and filter fields; Zod allow-list validation; React output encoding; strict CSP | SQLi and XSS payload tests, ESLint rules, Semgrep |
 | A04 Insecure design | Atomic stock update; DB `CHECK` constraints; admin bootstrap via seed only; threat model (this doc) | Concurrency test, constraint tests |
@@ -118,7 +118,7 @@ Cookies are sent automatically, so state-changing requests are protected by thre
 
 ### 8.1 Access control
 - **Deny by default:** `router.use(authenticate)` on the vehicle router, so a new route is protected unless explicitly made public.
-- `requireRole('admin')` on delete and restock. The role is read from the verified token, and for admin actions re-checked against the database (handles demoted users).
+- `requireRole('admin')` on delete and restock, and on `PUT /api/vehicles/:id` when the body sets `price`. The role is read from the verified token, and for admin actions re-checked against the database (handles demoted users).
 - Server enforces everything; hiding buttons in the UI is cosmetic only.
 
 ### 8.2 Validation (server-side, every input)
@@ -169,7 +169,8 @@ Every endpoint x {anonymous, user, admin} with the expected status.
 |---|---|---|---|
 | `GET /api/vehicles`, `/search` | 401 | 200 | 200 |
 | `POST /api/vehicles` | 401 | 201 | 201 |
-| `PUT /api/vehicles/:id` | 401 | 200 | 200 |
+| `PUT /api/vehicles/:id` (make, model, category, quantity) | 401 | 200 | 200 |
+| `PUT /api/vehicles/:id` setting `price` | 401 | **403** | 200 |
 | `POST /api/vehicles/:id/purchase` | 401 | 200 | 200 |
 | `DELETE /api/vehicles/:id` | 401 | **403** | 204 |
 | `POST /api/vehicles/:id/restock` | 401 | **403** | 200 |
