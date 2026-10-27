@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://YOUR-API-HOST/api/$1" },
+    { "source": "/api/(.*)", "destination": "https://incubyte-0dtb.onrender.com/api/$1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
