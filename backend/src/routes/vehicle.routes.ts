@@ -18,6 +18,11 @@ interface Guards {
   throttle: RequestHandler;
 }
 
+/** Runs `guard` only when the (validated) body sets one of `fields`; other edits skip it. */
+function whenBodySets(fields: readonly string[], guard: RequestHandler): RequestHandler {
+  return (req, res, next) => (fields.some((field) => field in req.body) ? guard(req, res, next) : next());
+}
+
 export function vehicleRoutes(controller: ReturnType<typeof createVehicleController>, guards: Guards) {
   const router = Router();
   // Deny by default: every vehicle route, including ones added later, requires a session.
@@ -29,7 +34,14 @@ export function vehicleRoutes(controller: ReturnType<typeof createVehicleControl
   router.get('/forecast', guards.adminOnly, controller.forecast);
   router.get('/stats', controller.stats);
   router.post('/', validateBody(createVehicleSchema), controller.create);
-  router.put('/:id', validateParams(vehicleIdSchema), validateBody(updateVehicleSchema), controller.update);
+  // Anyone signed in may edit a vehicle's details, but only an admin may change its price.
+  router.put(
+    '/:id',
+    validateParams(vehicleIdSchema),
+    validateBody(updateVehicleSchema),
+    whenBodySets(['price'], guards.adminOnly),
+    controller.update,
+  );
   router.post('/:id/purchase', validateParams(vehicleIdSchema), validateBody(purchaseSchema), controller.purchase);
   router.post(
     '/:id/restock',

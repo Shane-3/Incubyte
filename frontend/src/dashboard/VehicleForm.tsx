@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { CATEGORIES, type Category, type NewVehicleInput, type Vehicle, type VehicleInput } from '../api/types';
 import { useApi } from '../app/ApiContext';
+import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/ui/Button';
 import { FormAlert } from '../components/ui/FormAlert';
 import { SelectField } from '../components/ui/SelectField';
@@ -113,6 +114,9 @@ export function VehicleForm(props: AddProps | EditProps) {
   const rowKey = useRef(0);
 
   const existing = useExistingModel(draft.make, draft.model, props.mode === 'add');
+  // The API only accepts a price change on an existing vehicle from an admin.
+  const { user } = useAuth();
+  const priceLocked = props.mode === 'edit' && user?.role !== 'admin';
   // A multi-colour model's stock is changed per colour (restock, or adding units of a colour), not as one total.
   const stockPerColour = initial !== undefined && initial.colours.length > 1;
   // When colours are listed, the quantity is their total rather than a separate field.
@@ -188,7 +192,8 @@ export function VehicleForm(props: AddProps | EditProps) {
           min={0}
           value={existing ? String(existing.price) : draft.price}
           onChange={set('price')}
-          disabled={existing !== undefined}
+          disabled={existing !== undefined || priceLocked}
+          hint={priceLocked ? 'Only admins can change the price' : undefined}
           error={errors.price}
         />
         {!stockPerColour && !quantityFromColours && (

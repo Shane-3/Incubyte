@@ -78,10 +78,10 @@ describe('back-in-stock notifications', () => {
 
     const res = await api
       .mutate('put', `/api/vehicles/${camry.id}`, bystander.cookie)
-      .send({ quantity: 3, price: 25999 });
+      .send({ quantity: 3, model: 'Camry Hybrid' });
 
     expect(res.status).toBe(200);
-    expect(res.body.vehicle).toMatchObject({ quantity: 3, price: 25999 });
+    expect(res.body.vehicle).toMatchObject({ quantity: 3, model: 'Camry Hybrid' });
     expect(await backInStockFor(camry.id)).toHaveLength(2);
     expect(await watchCount()).toBe(0);
   });
